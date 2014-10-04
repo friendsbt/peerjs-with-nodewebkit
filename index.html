@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+  <meta charset="UTF-8">
+  <title>hello world</title>
+  <script src="peer.js"></script>
+</head>
+<body>
+hello world!
+</body>
+<script>
+  var peer = new Peer('zuoyao', {key: 'bid90nkby13sdcxr'});
+  var conn = peer.connect('lizhihua');
+
+  // connect side code
+  conn.on('open', function(){
+    conn.send('hi!');
+  });
+
+  // receive side code
+  peer.on('connection', function(conn) {
+    conn.on('data', function(data){
+      // Will print 'hi!'
+      console.log(data);
+    });
+  });
+
+</script>
+</html>
