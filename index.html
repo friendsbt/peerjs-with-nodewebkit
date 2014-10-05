@@ -11,17 +11,23 @@ hello world!
 <script>
   var peer = new Peer('zuoyao', {key: 'bid90nkby13sdcxr'});
   var conn = peer.connect('lizhihua');
+  var fs = require('fs');
 
   // connect side code
   conn.on('open', function(){
-    conn.send('hi!');
+    console.log("connect to peer");
+    var data = fs.readFileSync('Advice.mp3');
+    conn.send(data);
+    console.log('data sent');
   });
+
 
   // receive side code
   peer.on('connection', function(conn) {
     conn.on('data', function(data){
       // Will print 'hi!'
-      console.log(data);
+      fs.writeFileSync('Advice.mp3', data);
+      console.log("received complete: ", Date());
     });
   });
 
