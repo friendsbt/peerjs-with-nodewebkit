@@ -27,3 +27,4 @@ io.sockets.on('connection', function(socket){
 	});
 });
 server.listen(12345);
+window.location.href = "http://127.0.0.1:12345/";
