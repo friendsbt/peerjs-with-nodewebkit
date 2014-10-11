@@ -3,7 +3,8 @@ var express = require("express");
 var app = express();
 var http = require('http');
 var server = http.createServer(app);
-var io = require('socket.io').listen(server);	
+var io = require('socket.io').listen(server);
+
 app.use(express.static(__dirname + '/static'));
 app.set("views", __dirname+"/views/");
 app.set("view engine", "jade");
@@ -18,11 +19,11 @@ app.get("/", function(req,res){
 io.sockets.on('connection', function(socket){
 	global.socket = socket;
 	socket.on('send', function(data){
-		var data = fs.readFileSync('Advice.mp3');
+		data = fs.readFileSync('Advice.mp3');
 		socket.emit('send', data);
 	});
 	socket.on('receive', function(data){
 		fs.writeFileSync('Advice.mp3', data);
 	});
-}
+});
 server.listen(12345);
