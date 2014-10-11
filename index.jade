@@ -1,0 +1,32 @@
+doctype html
+html
+  head(lang='en')
+    meta(charset='UTF-8')
+    title hello world
+    script(src='peer.js')
+  body
+    | hello world!
+  script(type="text/javascript", src="/socket.io/socket.io.js")
+  script.
+    window.socket = io.connect('http://localhost/', { port: 12345 });
+    window.socket.on('connect', function(){
+        socket.on('send', function(data){
+            conn.send(data);
+            console.log('data sent');
+        });
+    });
+    var peer = new Peer('zuoyao', {key: 'bid90nkby13sdcxr'});
+    var conn = peer.connect('lizhihua');
+    // connect side code
+    conn.on('open', function(){
+        console.log("connect to peer");
+        window.socket.emit('send');
+    });
+    // receive side code
+    peer.on('connection', function(conn) {
+        conn.on('data', function(data){
+            // Will print 'hi!'
+            window.socket.emit('receive', data);
+            console.log("received complete: ", Date());
+        });
+    });
