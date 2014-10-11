@@ -1,9 +1,9 @@
 var fs = require('fs');
-var express = require(path_s.join(global.exec_path,"express"));
+var express = require("express");
 var app = express();
 var http = require('http');
 var server = http.createServer(app);
-var io = require(path_s.join(global.exec_path,'socket.io')).listen(server);	
+var io = require('socket.io').listen(server);	
 app.use(express.static(__dirname + '/static'));
 app.set("views", __dirname+"/views/");
 app.set("view engine", "jade");
