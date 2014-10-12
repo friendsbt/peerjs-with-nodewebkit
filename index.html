@@ -3,7 +3,7 @@
 <head lang="en">
   <meta charset="UTF-8">
   <title>hello world</title>
-  <script src="peer.js"></script>
+  <script src="static/js/peer.js"></script>
 </head>
 <body>
 hello world!
@@ -11,7 +11,7 @@ hello world!
 <script>
   var peer = new Peer('zuoyao', {key: 'bid90nkby13sdcxr'});
   var conn = peer.connect('lizhihua');
-  var fs = require('fs');
+//  var fs = require('fs');
 
   // connect side code
   conn.on('open', function(){
