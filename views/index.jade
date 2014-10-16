@@ -8,25 +8,31 @@ html
     | hello world!
   script(type="text/javascript", src="/socket.io/socket.io.js")
   script.
+    var mode = 'send';
+    // var mode = 'receive';
     window.socket = io.connect('http://localhost/', { port: 12345 });
-    window.socket.on('connect', function(){
-        socket.on('send', function(data){
-            conn.send(data);
-            console.log('data sent');
+
+    if (mode === 'send') {
+        window.socket.on('connect', function(){
+            socket.on('send', function(data){
+                conn.send(data);
+                console.log('data sent');
+            });
         });
-    });
-    var peer = new Peer('zuoyao', {key: 'bid90nkby13sdcxr'});
-    var conn = peer.connect('lizhihua');
-    // connect side code
-    conn.on('open', function(){
-        console.log("connect to peer");
-        window.socket.emit('send');
-    });
-    // receive side code
-    peer.on('connection', function(conn) {
-        conn.on('data', function(data){
-            // Will print 'hi!'
-            window.socket.emit('receive', data);
-            console.log("received complete: ", Date());
+        var peer = new Peer('zuoyao', {key: 'bid90nkby13sdcxr'});
+        var conn = peer.connect('lizhihua');
+        conn.on('open', function(){
+            console.log("connect to peer");
+            window.socket.emit('send');
         });
-    });
+    }
+
+    if (mode === 'receive') {
+        var peer = new Peer('lizhihua', {key: 'bid90nkby13sdcxr'});
+        peer.on('connection', function(conn) {
+            conn.on('data', function(data){
+                window.socket.emit('receive', data);
+                console.log("received complete: ", Date());
+            });
+        });
+    }
