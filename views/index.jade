@@ -17,9 +17,10 @@ html
             socket.on('send', function(data){
                 conn.send(data);
                 console.log('data sent');
+                peer.disconnect();
             });
         });
-        var peer = new Peer('zuoyao', {key: 'bid90nkby13sdcxr'});
+        var peer = new Peer('zuoyao', {key: '45rvl4l8vjn3766r'});
         var conn = peer.connect('lizhihua');
         conn.on('open', function(){
             console.log("connect to peer");

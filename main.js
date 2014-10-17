@@ -39,16 +39,13 @@ function toBuffer(ab) {
 	io.sockets.on('connection', function(socket){
 		global.socket = socket;
 		socket.on('send', function(data){
-			data = fs.readFileSync('Advice.mp3');
+			data = fs.readFileSync('.gitignore');
+            // TODO: can I send data directly which is nodejs Buffer?
 			socket.emit('send', toArrayBuffer(data));
 		});
 		socket.on('receive', function(data){
-            if (data.constructor === ArrayBuffer) {
-                console.log("start wrting to file");
-                fs.writeFileSync('Advice.mp3', toBuffer(data));
-            } else {
-                console.log("data type wrong!");
-            }
+            console.log("start wrting to file");
+            fs.writeFileSync('Advice.mp3', data);
 		});
 	});
 	server.listen(12345);
