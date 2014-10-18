@@ -20,7 +20,7 @@ html
                 peer.disconnect();
             });
         });
-        var peer = new Peer('zuoyao', {key: '45rvl4l8vjn3766r'});
+        var peer = new Peer('zuoyao', {host: '182.92.191.93', port: 9000});
         var conn = peer.connect('lizhihua');
         conn.on('open', function(){
             console.log("connect to peer");
@@ -29,7 +29,7 @@ html
     }
 
     if (mode === 'receive') {
-        var peer = new Peer('lizhihua', {key: 'bid90nkby13sdcxr'});
+        var peer = new Peer('lizhihua', {host: '182.92.191.93', port: 9000});
         peer.on('connection', function(conn) {
             conn.on('data', function(data){
                 window.socket.emit('receive', data);
