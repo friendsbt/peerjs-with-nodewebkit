@@ -54,14 +54,16 @@ function toBuffer(ab) {
                     clearInterval(intervalObj);
                     file.read(start, last_block_size, function(err, data){
                         socket.emit('send', {index: index, data:toArrayBuffer(data)});
+                        console.log("last block sent");
                         file.close();
                     })
+                } else {
+                    file.read(start, BLOCK_SIZE, function (err, data) {
+                        socket.emit('send', {index: index, data: toArrayBuffer(data)});
+                        start += BLOCK_SIZE;
+                        index++;
+                    })
                 }
-                file.read(start, BLOCK_SIZE, function(err, data){
-                    socket.emit('send', {index: index, data: toArrayBuffer(data)});
-                    start += BLOCK_SIZE;
-                    index++;
-                })
             }, 100);
 		});
 		socket.on('receive', function(info){

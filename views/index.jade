@@ -39,7 +39,7 @@ html
         var peer = new Peer('lizhihua', {host: '182.92.191.93', port: 9000});
         peer.on('connection', function(conn) {
             conn.on('data', function(data){
-                window.socket.emit('receive', {data: data, start: start);
+                window.socket.emit('receive', {data: data, start: start});
                 start++;
                 console.log("received complete: ", Date());
             });
