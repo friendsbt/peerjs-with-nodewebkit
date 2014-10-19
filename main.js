@@ -64,7 +64,7 @@ function toBuffer(ab) {
                         index++;
                     })
                 }
-            }, 100);
+            }, 30);
 		});
 		socket.on('receive', function(info){
             file.write(info.start * BLOCK_SIZE, info.data, function(err){
