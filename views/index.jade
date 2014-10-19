@@ -15,13 +15,18 @@ html
     if (mode === 'send') {
         window.socket.on('connect', function(){
             socket.on('send', function(data){
-                conn.send(data);
-                console.log('data sent');
+                conn.send(data.data);
+                console.log('block ', data.index, "sent: ", Date);
                 peer.disconnect();
             });
         });
         var peer = new Peer('zuoyao', {host: '182.92.191.93', port: 9000});
-        var conn = peer.connect('lizhihua');
+        var conn = peer.connect(
+            'lizhihua',
+            {
+                reliable: true
+            }
+        );
         conn.on('open', function(){
             console.log("connect to peer");
             window.socket.emit('send');
@@ -29,10 +34,13 @@ html
     }
 
     if (mode === 'receive') {
+        console.log("start wrting to file");
+        var start = 0;
         var peer = new Peer('lizhihua', {host: '182.92.191.93', port: 9000});
         peer.on('connection', function(conn) {
             conn.on('data', function(data){
-                window.socket.emit('receive', data);
+                window.socket.emit('receive', {data: data, start: start);
+                start++;
                 console.log("received complete: ", Date());
             });
         });

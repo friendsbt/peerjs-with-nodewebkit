@@ -1,4 +1,8 @@
 var fs = require('fs');
+var raf = require('random-access-file');
+var xxhash = require('xxhashjs');
+
+var BLOCK_SIZE = 1024;
 
 function toArrayBuffer(buffer) {
     var ab = new ArrayBuffer(buffer.length);
@@ -36,16 +40,46 @@ function toBuffer(ab) {
 	app.get("/", function(req,res){
 		res.render("index");
 	});
+    var file = raf('Advice.mp3');
 	io.sockets.on('connection', function(socket){
 		global.socket = socket;
-		socket.on('send', function(data){
-			data = fs.readFileSync('.gitignore');
-            // TODO: can I send data directly which is nodejs Buffer?
-			socket.emit('send', toArrayBuffer(data));
+		socket.on('send', function(){
+            var filesize = fs.statSync('Advice.mp3').size;
+            var totalFullBlocks = parseInt((filesize - BLOCK_SIZE + 1) / BLOCK_SIZE);
+            var last_block_size = filesize - BLOCK_SIZE * totalFullBlocks;
+            var index = 0;
+            var start = 0;
+            var intervalObj = setInterval(function(){
+                if (index > totalFullBlocks - 1) {
+                    clearInterval(intervalObj);
+                    file.read(start, last_block_size, function(err, data){
+                        socket.emit('send', {index: index, data:toArrayBuffer(data)});
+                        file.close();
+                    })
+                }
+                file.read(start, BLOCK_SIZE, function(err, data){
+                    socket.emit('send', {index: index, data: toArrayBuffer(data)});
+                    start += BLOCK_SIZE;
+                    index++;
+                })
+            }, 100);
 		});
-		socket.on('receive', function(data){
-            console.log("start wrting to file");
-            fs.writeFileSync('Advice.mp3', data);
+		socket.on('receive', function(info){
+            file.write(info.start * BLOCK_SIZE, info.data, function(err){
+                if(err) {
+                    console.log(err);
+                }
+                if (info.data.length < BLOCK_SIZE) {
+                    console.log("receive complete, ", Date);
+                    file.close();
+                    var hash = parseInt(xxhash(0).update(fs.readFileSync('Advice.mp3')).digest());
+                    if (hash === 473225162) {
+                        console.log("hash equal");
+                    } else {
+                        console.log("hash not equal");
+                    }
+                }
+            });
 		});
 	});
 	server.listen(12345);
