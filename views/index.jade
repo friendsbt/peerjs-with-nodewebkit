@@ -14,13 +14,12 @@ html
 
     if (mode === 'send') {
         window.socket.on('connect', function(){
-            socket.on('send', function(data){
+            socket.on('send', function(data){  // what is this "socket"? is it window.socket?
                 conn.send(data.data);
                 console.log('block ', data.index, "sent: ", Date());
-                peer.disconnect();
             });
         });
-        var peer = new Peer('zuoyao', {host: '182.92.191.93', port: 9000});
+        var peer = new Peer('zuoyao', {host: '182.92.191.93', port: 9000, debug: 3});
         var conn = peer.connect(
             'lizhihua',
             {
@@ -34,10 +33,10 @@ html
     }
 
     if (mode === 'receive') {
-        console.log("start wrting to file");
         var start = 0;
-        var peer = new Peer('lizhihua', {host: '182.92.191.93', port: 9000});
+        var peer = new Peer('lizhihua', {host: '182.92.191.93', port: 9000, debug: 3});
         peer.on('connection', function(conn) {
+            console.log("start writing to file");
             conn.on('data', function(data){
                 window.socket.emit('receive', {data: data, start: start});
                 start++;
@@ -45,3 +44,17 @@ html
             });
         });
     }
+
+    window.socket.on('control', function(message){
+        switch(message.type) {
+            case "disconnect":
+                peer.disconnect();
+                break;
+            case "result":
+                console.log(message.result);
+                peer.disconnect();
+                break;
+            default:
+                console.log("wrong ctrl msg: ", message);
+        }
+    });

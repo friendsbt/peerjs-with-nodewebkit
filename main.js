@@ -56,6 +56,9 @@ function toBuffer(ab) {
                         socket.emit('send', {index: index, data:toArrayBuffer(data)});
                         console.log("last block sent");
                         file.close();
+                        setTimeout(function(){
+                            socket.emit('control', {type: "disconnect"});
+                        }, 100);
                     })
                 } else {
                     file.read(start, BLOCK_SIZE, function (err, data) {
@@ -75,11 +78,15 @@ function toBuffer(ab) {
                     console.log("receive complete, ", Date);
                     file.close();
                     var hash = parseInt(xxhash(0).update(fs.readFileSync('Advice.mp3')).digest());
+                    var result;
                     if (hash === 473225162) {
-                        console.log("hash equal");
+                        result = "hash equal";
                     } else {
-                        console.log("hash not equal");
+                        result = "hash not equal";
                     }
+                    setTimeout(function(){
+                        socket.emit('control', {type: 'result', result: result});
+                    }, 100);
                 }
             });
 		});
