@@ -22,6 +22,10 @@ function toBuffer(ab) {
     return buffer;
 }
 
+process.on("uncaughtException", function(err){
+    fs.appendFileSync('err.txt', err);
+});
+
 (function (){
 	var express = require("express");
 	var app = express();
