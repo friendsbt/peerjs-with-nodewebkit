@@ -16,6 +16,7 @@ html
         window.socket.on('connect', function(){
             socket.on('send', function(data){  // what is this "socket"? is it window.socket?
                 conn.send(data.data);
+                console.log('is reliable:', conn.reliable);
                 console.log("buffersize:", conn.bufferSize);
                 console.log('block ', data.index, "sent: ", Date());
             });
@@ -40,6 +41,7 @@ html
         var peer = new Peer('lizhihua', {host: '182.92.191.93', port: 9000, debug: 3});
         peer.on('connection', function(conn) {
             console.log("start writing to file");
+            console.log('is reliable:', conn.reliable);
             conn.on('data', function(data){
                 window.socket.emit('receive', {data: data, start: start});
                 start++;
