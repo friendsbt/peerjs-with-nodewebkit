@@ -26,7 +26,7 @@ process.on("uncaughtException", function(err){
     fs.appendFileSync('err.txt', err);
 });
 
-(function (){
+function main(window){
 	var express = require("express");
 	var app = express();
 	var http = require('http');
@@ -51,6 +51,8 @@ process.on("uncaughtException", function(err){
             var filesize = fs.statSync('Advice.mp3').size;
             var totalFullBlocks = parseInt((filesize - BLOCK_SIZE + 1) / BLOCK_SIZE);
             var last_block_size = filesize - BLOCK_SIZE * totalFullBlocks;
+            window.console.log('totalblock:' + totalFullBlocks.toString());
+            window.console.log('lastblocksize:'+last_block_size.toString());
             var index = 0;
             var start = 0;
             var intervalObj = setInterval(function(){
@@ -58,28 +60,29 @@ process.on("uncaughtException", function(err){
                     clearInterval(intervalObj);
                     file.read(start, last_block_size, function(err, data){
                         socket.emit('send', {index: index, data:toArrayBuffer(data)});
-                        console.log("last block sent");
+                        window.console.log("last block sent");
                         file.close();
                         setTimeout(function(){
                             socket.emit('control', {type: "disconnect"});
                         }, 100);
                     })
                 } else {
+                    window.console
                     file.read(start, BLOCK_SIZE, function (err, data) {
                         socket.emit('send', {index: index, data: toArrayBuffer(data)});
                         start += BLOCK_SIZE;
                         index++;
                     })
                 }
-            }, 30);
+            }, 1000);
 		});
 		socket.on('receive', function(info){
             file.write(info.start * BLOCK_SIZE, info.data, function(err){
                 if(err) {
-                    console.log(err);
+                    window.console.log(err);
                 }
                 if (info.data.length < BLOCK_SIZE) {
-                    console.log("receive complete, ", Date);
+                    window.console.log("receive complete, ", Date);
                     file.close();
                     var hash = parseInt(xxhash(0).update(fs.readFileSync('Advice.mp3')).digest());
                     var result;
@@ -96,5 +99,6 @@ process.on("uncaughtException", function(err){
 		});
 	});
 	server.listen(12345);
-})();
+}
 
+exports.main = main;

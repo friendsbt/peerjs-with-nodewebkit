@@ -16,6 +16,7 @@ html
         window.socket.on('connect', function(){
             socket.on('send', function(data){  // what is this "socket"? is it window.socket?
                 conn.send(data.data);
+                console.log("buffersize:", conn.bufferSize);
                 console.log('block ', data.index, "sent: ", Date());
             });
         });
@@ -42,7 +43,7 @@ html
             conn.on('data', function(data){
                 window.socket.emit('receive', {data: data, start: start});
                 start++;
-                console.log("received complete: ", Date());
+                console.log("got data", Date());
             });
         });
     }
