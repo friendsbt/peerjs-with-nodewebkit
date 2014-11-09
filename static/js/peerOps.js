@@ -1,13 +1,19 @@
+/*
+FBT中的连接发起模式:
+使用PeerJs时, 应该由上传端发起连接, 下载端记录一个时间段内收到的连接
+根据连接的数量来安排下载任务, 给每个上传端发送一个{start: index1, end: index2}
+这样上传端就知道自己应该发送哪一部分的数据
+ */
 var mode = 'send';
 //var mode = 'receive';
 window.socket = io.connect('http://localhost/', { port: 12345 });
 
 var UPLOADER = 'zuoyao';
 var DOWNLOADER = 'lizhihua';
-// TODO: DOWNLOADER raise new connection rather than UPLOADER
+
+var connections = {};
 
 if (mode === 'send') {
-    var connections = {};
     window.socket.on('connect', function(){
         socket.on('send', function(data){  // what is this "socket"? is it window.socket?
             connections[DOWNLOADER][0].send(data.data);
@@ -28,7 +34,17 @@ if (mode === 'send') {
         connections[DOWNLOADER].push(conn);
         conn.on('open', function(){
             console.log("connect to peer " + conn.peer);
-            window.socket.emit('send');
+        });
+        conn.on('data', function(data){
+            if (!data.start || !data.end) {
+                console.log('block range format wrong!');
+                conn.close();
+            } else {
+                // TODO: use start and end to select data range to send
+                console.log('start: ' + data.start);
+                console.log('end: ' + data.end);
+                window.socket.emit('send');
+            }
         });
         conn.on('error', function(err){
             console.log(err);
@@ -47,7 +63,9 @@ if (mode === 'receive') {
         peer.reconnect();
     });
     peer.on('connection', function(conn) {
+        // TODO: 下载端也应该记录connection
         console.log("connect to peer" + conn.peer);
+        conn.send({start: 0, end: 1000});   // TODO: downloader should know real start&&end
         conn.on('data', function(data){
             window.socket.emit('receive', {data: data, start: start});
             start++;
@@ -65,6 +83,7 @@ if (mode === 'receive') {
 window.socket.on('control', function(message){
     switch(message.type) {
         case "disconnect":
+            connections[DOWNLOADER][0].close();
             peer.disconnect();
             break;
         case "result":
