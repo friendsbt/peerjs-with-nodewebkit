@@ -13,6 +13,9 @@ if (mode === 'send') {
     });
     var peer = new Peer('zuoyao', {host: '182.92.191.93', port: 9000, debug: 3});
     peer.on('error', function(err){console.log(err)});
+    peer.on('disconnected', function(){
+        peer.reconnect();
+    });
     var conn = peer.connect(
         'lizhihua',
         {
@@ -24,6 +27,9 @@ if (mode === 'send') {
         window.socket.emit('send');
     });
     conn.on('error', function(err){console.log(err)});
+    conn.on('close', function(){
+        console.log(conn.peer + 'has closed data connection');
+    });
 }
 
 if (mode === 'receive') {
