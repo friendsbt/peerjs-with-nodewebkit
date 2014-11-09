@@ -16,32 +16,40 @@ if (mode === 'send') {
     peer.on('disconnected', function(){
         peer.reconnect();
     });
-    var conn = peer.connect(
-        'lizhihua',
-        {
-            reliable: true
-        }
-    );
-    conn.on('open', function(){
-        console.log("connect to peer");
-        window.socket.emit('send');
-    });
-    conn.on('error', function(err){console.log(err)});
-    conn.on('close', function(){
-        console.log(conn.peer + 'has closed data connection');
+    peer.on('connection', function(){
+        var conn = peer.connect('lizhihua', { reliable: true });
+        conn.on('open', function(){
+            console.log("connect to peer" + conn.peer);
+            window.socket.emit('send');
+        });
+        conn.on('error', function(err){
+            console.log(err);
+        });
+        conn.on('close', function(){
+            console.log(conn.peer + 'has closed data connection');
+        });
     });
 }
 
 if (mode === 'receive') {
     var start = 0;
     var peer = new Peer('lizhihua', {host: '182.92.191.93', port: 9000, debug: 3});
+    peer.on('error', function(err){console.log(err)});
+    peer.on('disconnected', function(){
+        peer.reconnect();
+    });
     peer.on('connection', function(conn) {
-        console.log("start writing to file");
-        console.log('is reliable:', conn.reliable);
+        console.log("connect to peer" + conn.peer);
         conn.on('data', function(data){
             window.socket.emit('receive', {data: data, start: start});
             start++;
             console.log("got data", Date());
+        });
+        conn.on('error', function(err){
+            console.log(err);
+        });
+        conn.on('close', function(){
+            console.log(conn.peer + 'has closed data connection');
         });
     });
 }
