@@ -4,6 +4,7 @@ FBT中的连接发起模式:
 根据连接的数量来安排下载任务, 给每个上传端发送一个{start: index1, end: index2}
 这样上传端就知道自己应该发送哪一部分的数据
  */
+// TODO: retry connection
 var mode = 'send';
 //var mode = 'receive';
 window.socket = io.connect('http://localhost/', { port: 12345 });
@@ -29,14 +30,15 @@ if (mode === 'send') {
     });
     peer.on('open', function(){
         console.log('open');
-        var conn = peer.connect(DOWNLOADER, { reliable: true });
+        var conn = peer.connect(DOWNLOADER, { reliable: true});
         connections[DOWNLOADER] = [];
         connections[DOWNLOADER].push(conn);
         conn.on('open', function(){
             console.log("connect to peer " + conn.peer);
         });
         conn.on('data', function(data){
-            if (!data.start || !data.end) {
+            console.log('got data: ', data);
+            if (typeof(data.start)==='undefined' || typeof(data.end)==='undefined') {
                 console.log('block range format wrong!');
                 conn.close();
             } else {
@@ -65,7 +67,9 @@ if (mode === 'receive') {
     peer.on('connection', function(conn) {
         // TODO: 下载端也应该记录connection
         console.log("connect to peer" + conn.peer);
-        conn.send({start: 0, end: 1000});   // TODO: downloader should know real start&&end
+        setTimeout(function(){  // this timeout is necessary
+            conn.send({start: 0, end: 1000});   // TODO: downloader should know real start&&end
+        }, 2000);
         conn.on('data', function(data){
             window.socket.emit('receive', {data: data, start: start});
             start++;
