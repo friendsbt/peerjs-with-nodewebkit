@@ -69,7 +69,8 @@ if (mode === 'receive') {
     });
     peer.on('connection', function(conn) {
         console.log("Got connection from " + conn.peer);
-        connections[UPLOADER][0] = conn;
+        connections[UPLOADER] = [];
+        connections[UPLOADER].push(conn);
         addConnEventListener(conn);
     });
     function addConnEventListener(conn) {
