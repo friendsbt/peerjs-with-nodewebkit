@@ -65,9 +65,12 @@ if (mode === 'receive') {
         peer.reconnect();
     });
     peer.on('open', function(){
-        peer.on('connection', function(conn) {
-            // TODO: 下载端也应该记录connection
-            console.log("connect to peer" + conn.peer);
+        console.log("connect to server");
+    });
+    peer.on('connection', function(conn) {
+        // TODO: 下载端也应该记录connection
+        conn.on('open', function(){
+            console.log("connect to peer " + conn.peer);
             setTimeout(function(){  // this timeout is necessary
                 conn.send({start: 0, end: 1000});   // TODO: downloader should know real start&&end
             }, 2000);
