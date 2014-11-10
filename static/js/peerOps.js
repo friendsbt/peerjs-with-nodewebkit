@@ -64,22 +64,24 @@ if (mode === 'receive') {
     peer.on('disconnected', function(){
         peer.reconnect();
     });
-    peer.on('connection', function(conn) {
-        // TODO: 下载端也应该记录connection
-        console.log("connect to peer" + conn.peer);
-        setTimeout(function(){  // this timeout is necessary
-            conn.send({start: 0, end: 1000});   // TODO: downloader should know real start&&end
-        }, 2000);
-        conn.on('data', function(data){
-            window.socket.emit('receive', {data: data, start: start});
-            start++;
-            console.log("got data", Date());
-        });
-        conn.on('error', function(err){
-            console.log(err);
-        });
-        conn.on('close', function(){
-            console.log(conn.peer + 'has closed data connection');
+    peer.on('open', function(){
+        peer.on('connection', function(conn) {
+            // TODO: 下载端也应该记录connection
+            console.log("connect to peer" + conn.peer);
+            setTimeout(function(){  // this timeout is necessary
+                conn.send({start: 0, end: 1000});   // TODO: downloader should know real start&&end
+            }, 2000);
+            conn.on('data', function(data){
+                window.socket.emit('receive', {data: data, start: start});
+                start++;
+                console.log("got data", Date());
+            });
+            conn.on('error', function(err){
+                console.log(err);
+            });
+            conn.on('close', function(){
+                console.log(conn.peer + 'has closed data connection');
+            });
         });
     });
 }
