@@ -32,6 +32,7 @@ function main(window){
 	var http = require('http');
 	var server = http.createServer(app);
 	var io = require('socket.io').listen(server);
+    var fileDowloadV4 = require('fileDownloadV4/downloaderV4.js');
 
 	app.use(express.static(__dirname + '/static'));
 	app.set("views", __dirname+"/views/");
