@@ -1,6 +1,36 @@
 // NODE
 
 // global.socket.emit("upload")
+function emit_upload_msg() {
+    socket.emit('send', function () {
+        var filesize = fs.statSync('Advice.mp3').size;
+        var totalFullBlocks = parseInt((filesize - BLOCK_SIZE + 1) / BLOCK_SIZE);
+        var last_block_size = filesize - BLOCK_SIZE * totalFullBlocks;
+        window.console.log('totalblock:' + totalFullBlocks.toString());
+        window.console.log('lastblocksize:' + last_block_size.toString());
+        var index = 0;
+        var start = 0;
+        var intervalObj = setInterval(function () {
+            if (index > totalFullBlocks - 1) {
+                clearInterval(intervalObj);
+                file.read(start, last_block_size, function (err, data) {
+                    socket.emit('send', {index: index, data: toArrayBuffer(data)});
+                    window.console.log("last block sent");
+                    file.close();
+                    setTimeout(function () {
+                        socket.emit('control', {type: "disconnect"});
+                    }, 100);
+                });
+            } else {
+                file.read(start, BLOCK_SIZE, function (err, data) {
+                    socket.emit('send', {index: index, data: toArrayBuffer(data)});
+                    start += BLOCK_SIZE;
+                    index++;
+                });
+            }
+        }, 1000);
+    });
+}
 
 function upload_main(my_uid, downloader_uid, hash, size){
     global.log.info(my_uid);

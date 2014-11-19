@@ -46,37 +46,11 @@ function main(window){
 		res.render("index");
 	});
     var file = raf('Advice.mp3');
-	io.sockets.on('connection', function(socket){
-		global.socket = socket;
-		socket.on('send', function(){
-            var filesize = fs.statSync('Advice.mp3').size;
-            var totalFullBlocks = parseInt((filesize - BLOCK_SIZE + 1) / BLOCK_SIZE);
-            var last_block_size = filesize - BLOCK_SIZE * totalFullBlocks;
-            window.console.log('totalblock:' + totalFullBlocks.toString());
-            window.console.log('lastblocksize:'+last_block_size.toString());
-            var index = 0;
-            var start = 0;
-            var intervalObj = setInterval(function(){
-                if (index > totalFullBlocks - 1) {
-                    clearInterval(intervalObj);
-                    file.read(start, last_block_size, function(err, data){
-                        socket.emit('send', {index: index, data:toArrayBuffer(data)});
-                        window.console.log("last block sent");
-                        file.close();
-                        setTimeout(function(){
-                            socket.emit('control', {type: "disconnect"});
-                        }, 100);
-                    });
-                } else {
-                    file.read(start, BLOCK_SIZE, function (err, data) {
-                        socket.emit('send', {index: index, data: toArrayBuffer(data)});
-                        start += BLOCK_SIZE;
-                        index++;
-                    });
-                }
-            }, 1000);
-		});
-		socket.on('receive', function(info){
+	io.sockets.on('connection', function(socket) {
+        global.socket = socket;
+        socket.on('receive', function(info){
+            // TODO: update downloader states using global.downloaders[info.hash]
+
             file.write(info.start * BLOCK_SIZE, info.data, function(err){
                 if(err) {
                     window.console.log(err);
@@ -96,8 +70,12 @@ function main(window){
                     }, 100);
                 }
             });
-		});
-	});
+        });
+    });
+    global.downloaders = {};
+    if ("some condition") {
+        fileDowloadV4.downloadFile(args);
+    }
 	server.listen(12345);
 }
 

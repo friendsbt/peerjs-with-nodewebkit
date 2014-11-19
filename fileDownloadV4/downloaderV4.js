@@ -9,7 +9,7 @@ var DOWNLOAD_OVER = settings.DownloadState['DOWNLOAD_OVER'],
     DOWNLOAD_ERR = settings.DownloadState['DOWNLOAD_ERR'],
     ALREADY_COMPLETE = settings.DownloadState['ALREADY_COMPLETE'];
 
-var downloaders = {};
+var downloaders = global.downloaders;
 
 function v4Downloader(fileInfo, my_uid, uploader_uids, e,
         downloadOverCallback, downloadProgressCallback) {
@@ -59,6 +59,7 @@ exports.downloadFile = function(fileInfo, my_uid, uploader_uids,
     var d = new v4Downloader(fileInfo, my_uid, uploader_uids, e,
         downloadOverCallback, downloadProgressCallback);
     downloaders[fileInfo.hash] = d;
+    d.startFileDownload();
 };
 
 exports.pauseFileDownload = function(hash) {
