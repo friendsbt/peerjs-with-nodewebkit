@@ -65,14 +65,13 @@ function main(window){
                         setTimeout(function(){
                             socket.emit('control', {type: "disconnect"});
                         }, 100);
-                    })
+                    });
                 } else {
-                    window.console
                     file.read(start, BLOCK_SIZE, function (err, data) {
                         socket.emit('send', {index: index, data: toArrayBuffer(data)});
                         start += BLOCK_SIZE;
                         index++;
-                    })
+                    });
                 }
             }, 1000);
 		});

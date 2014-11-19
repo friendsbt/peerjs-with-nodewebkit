@@ -1,5 +1,5 @@
 var forwardDownloader = require('./forward').forwardDownloader;
-var peerjsDownloader = require('./peer').peerjsDownloader;
+var peerjsDownloader = require('./peerDownloader').peerjsDownloader;
 
 var downloaders = {};
 
@@ -25,13 +25,13 @@ exports.downloadFile = function(fileInfo, my_uid, uploader_uids, e, downloadOver
     // determine whether to use forward
     var d = new v4Downloader(manyattr, type);  // type is peerjs or forward
     downloaders[fileInfo.hash] = d;
-}
+};
 
 exports.pauseFileDownload = function(hash) {
     downloaders[hash].cancelFileDownload();
     delete downloaders[hash];
-}
+};
 
 exports.cancelFileDownload = function(hash) {
     downloaders[hash].pauseFileDownload();
-}
+};
