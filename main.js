@@ -33,6 +33,7 @@ function main(window){
 	var server = http.createServer(app);
 	var io = require('socket.io').listen(server);
     var fileDowloadV4 = require('fileDownloadV4/downloaderV4.js');
+    var fileUploadV4 = require('fileDownloadV4/uploaderV4.js');
 
 	app.use(express.static(__dirname + '/static'));
 	app.set("views", __dirname+"/views/");
@@ -40,7 +41,6 @@ function main(window){
 	app.set("view options", {layout:false});
 	app.use(express.bodyParser());
 	app.use(express.cookieParser());
-	//app.use(express.session());
 	app.use(express.logger());
 	app.get("/", function(req,res){
 		res.render("index");
@@ -55,6 +55,7 @@ function main(window){
                 if(err) {
                     window.console.log(err);
                 }
+                // TODO: 何时接收完成
                 if (info.data.length < BLOCK_SIZE) {
                     window.console.log("receive complete, ", Date);
                     file.close();
@@ -73,8 +74,14 @@ function main(window){
         });
     });
     global.downloaders = {};
+    fileUploadV4.initWindow(window);
     if ("some condition") {
         fileDowloadV4.downloadFile(args);
+    }
+    if ("some condition2") {
+        var my_uid = 'zuoyao';
+        var downloader_uid = 'lizhihua';
+        fileUploadV4.initV4Upload(my_uid, downloader_uid, hash, size);
     }
 	server.listen(12345);
 }

@@ -2,6 +2,7 @@
 exports.peerjsDownloader = function(){};
 
 var connections = {};
+var BLOCK_SIZE = 1024;
 
 function download() {
     var start = 0;
@@ -41,30 +42,39 @@ function download() {
     }
 }
 
-function upload() {
-    var peer = new Peer(UPLOADER, {host: '182.92.191.93', port: 9000, debug: 3});
+function upload(my_uid, downloader_uid, fileInfo) {
+    var peer = new Peer(my_uid, {host: '182.92.191.93', port: 9000, debug: 3});
     peer.on('error', function(err){console.log(err)});
     peer.on('disconnected', function(){
         peer.reconnect();
     });
     peer.on('open', function(){
         console.log('connect to server');
-        var conn = peer.connect(DOWNLOADER, { reliable: true});
+        var conn = peer.connect(downloader_uid, { reliable: true });
         connections[DOWNLOADER] = [];
         connections[DOWNLOADER].push(conn);
         conn.on('open', function(){
             console.log("connect to peer " + conn.peer);
         });
         conn.on('data', function(data){
+            /*
+            uploader唯一可能接受downloader的信息就是上传的数据块范围信息
+             */
             console.log('got data: ', data);
             if (typeof(data.start)==='undefined' || typeof(data.end)==='undefined') {
                 console.log('block range format wrong!');
                 conn.close();
             } else {
-                // TODO: use start and end to select data range to send
                 console.log('start: ' + data.start);
                 console.log('end: ' + data.end);
-                window.socket.emit('send');
+                var lastBlockSize = BLOCK_SIZE;
+                if (end === fileInfo.totalFullBlocks) {
+                    lastBlockSize = fileInfo.lastBlockSize;
+                }
+                window.socket.emit('send_data_blocks', {
+                    start: data.start, count: data.end-data.start,
+                    lastBlockSize: lastBlockSize
+                });
             }
         });
         conn.on('error', function(err){

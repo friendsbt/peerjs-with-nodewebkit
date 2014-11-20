@@ -3,18 +3,24 @@ var settings = require('settings');
 var BLOCK_SIZE = settings.BLOCK_SIZE;
 
 var browserWindow;
-
-exports.initV4Upload = function(window){
+exports.initWindow = function(window) {
     browserWindow = window;
-    var filesize = fs.statSync('Advice.mp3').size;
+}
+
+exports.initV4Upload = function(my_uid, downloader_uid, size){
+    var filesize = fs.statSync('Advice.mp3').size;  // 实际中使用参数size
     var totalFullBlocks = parseInt((filesize - BLOCK_SIZE + 1) / BLOCK_SIZE);
-    var last_block_size = filesize - BLOCK_SIZE * totalFullBlocks;
-    window.console.log('totalblock:' + totalFullBlocks.toString());
-    window.console.log('lastblocksize:' + last_block_size.toString());
-    global.socket.emit('connect_downloader', {});
+    var lastBlockSize = filesize - BLOCK_SIZE * totalFullBlocks;
+    browserWindow.console.log('totalblock:' + totalFullBlocks.toString());
+    browserWindow.console.log('lastblocksize:' + lastBlockSize.toString());
+    global.socket.emit('connect_downloader', {
+        'my_uid': my_uid,
+        'downloader_uid': downloader_uid,
+        'fileInfo': {'totalFullBlocks': totalFullBlocks, 'lastBlockSize': lastBlockSize}
+    });
 };
 
-global.socket.on('send_data_blocks', function(start, count, last_block_size) {
+global.socket.on('send_data_blocks', function(start, count, lastBlockSize) {
     /*
     last_block_size = BLOCK_SIZE, unless the last block of file will be sent here
      */
@@ -22,7 +28,7 @@ global.socket.on('send_data_blocks', function(start, count, last_block_size) {
     var intervalObj = setInterval(function () {
         if (index >= count) {
             clearInterval(intervalObj);
-            file.read(start, last_block_size, function (err, data) {
+            file.read(start, lastBlockSize, function (err, data) {
                 socket.emit('send', {index: index, data: toArrayBuffer(data)});
                 browserWindow.console.log("last block sent");
                 file.close();
@@ -32,7 +38,7 @@ global.socket.on('send_data_blocks', function(start, count, last_block_size) {
             });
         } else {
             file.read(start, BLOCK_SIZE, function (err, data) {
-                global.socket.emit('send', {index: index, data: toArrayBuffer(data)});
+                global.socket.emit('send_block', {index: index, data: toArrayBuffer(data)});
                 start += BLOCK_SIZE;
                 index++;
             });
