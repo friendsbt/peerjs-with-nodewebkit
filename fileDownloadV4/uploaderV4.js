@@ -1,37 +1,46 @@
 // NODE
+var settings = require('settings');
+var BLOCK_SIZE = settings.BLOCK_SIZE;
 
-// global.socket.emit("upload")
-function emit_upload_msg() {
-    socket.emit('send', function () {
-        var filesize = fs.statSync('Advice.mp3').size;
-        var totalFullBlocks = parseInt((filesize - BLOCK_SIZE + 1) / BLOCK_SIZE);
-        var last_block_size = filesize - BLOCK_SIZE * totalFullBlocks;
-        window.console.log('totalblock:' + totalFullBlocks.toString());
-        window.console.log('lastblocksize:' + last_block_size.toString());
-        var index = 0;
-        var start = 0;
-        var intervalObj = setInterval(function () {
-            if (index > totalFullBlocks - 1) {
-                clearInterval(intervalObj);
-                file.read(start, last_block_size, function (err, data) {
-                    socket.emit('send', {index: index, data: toArrayBuffer(data)});
-                    window.console.log("last block sent");
-                    file.close();
-                    setTimeout(function () {
-                        socket.emit('control', {type: "disconnect"});
-                    }, 100);
-                });
-            } else {
-                file.read(start, BLOCK_SIZE, function (err, data) {
-                    socket.emit('send', {index: index, data: toArrayBuffer(data)});
-                    start += BLOCK_SIZE;
-                    index++;
-                });
-            }
-        }, 1000);
-    });
-}
+var browserWindow;
 
+exports.initV4Upload = function(window){
+    browserWindow = window;
+    var filesize = fs.statSync('Advice.mp3').size;
+    var totalFullBlocks = parseInt((filesize - BLOCK_SIZE + 1) / BLOCK_SIZE);
+    var last_block_size = filesize - BLOCK_SIZE * totalFullBlocks;
+    window.console.log('totalblock:' + totalFullBlocks.toString());
+    window.console.log('lastblocksize:' + last_block_size.toString());
+    global.socket.emit('connect_downloader', {});
+};
+
+global.socket.on('send_data_blocks', function(start, count, last_block_size) {
+    /*
+    last_block_size = BLOCK_SIZE, unless the last block of file will be sent here
+     */
+    var index = 0;
+    var intervalObj = setInterval(function () {
+        if (index >= count) {
+            clearInterval(intervalObj);
+            file.read(start, last_block_size, function (err, data) {
+                socket.emit('send', {index: index, data: toArrayBuffer(data)});
+                browserWindow.console.log("last block sent");
+                file.close();
+                setTimeout(function () {
+                    global.socket.emit('control', {type: "disconnect"});
+                }, 100);
+            });
+        } else {
+            file.read(start, BLOCK_SIZE, function (err, data) {
+                global.socket.emit('send', {index: index, data: toArrayBuffer(data)});
+                start += BLOCK_SIZE;
+                index++;
+            });
+        }
+    }, 1000);
+});
+
+/* TODO: 之后要把upload_main里的逻辑移入initV4Upload
 function upload_main(my_uid, downloader_uid, hash, size){
     global.log.info(my_uid);
     global.log.info(downloader_uid);
@@ -68,7 +77,4 @@ function upload_main(my_uid, downloader_uid, hash, size){
         create_upload_client(global.nat_type, pool, client_id, interval_obj);
     }
 }
-
-exports.upload_main = upload_main;
-
-
+*/

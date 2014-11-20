@@ -8,3 +8,4 @@ var DownloadState = {
 };
 
 exports.DownloadState = DownloadState;
+exports.BLOCK_SIZE = 1024;
