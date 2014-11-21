@@ -43,48 +43,48 @@ function download() {
 }
 
 function upload(my_uid, downloader_uid, fileInfo) {
-    var peer = new Peer(my_uid, {host: '182.92.191.93', port: 9000, debug: 3});
-    peer.on('error', function(err){console.log(err)});
-    peer.on('disconnected', function(){
-        peer.reconnect();
+  var peer = new Peer(my_uid, {host: '182.92.191.93', port: 9000, debug: 3});
+  peer.on('error', function(err){console.log(err)});
+  peer.on('disconnected', function(){
+      peer.reconnect();
+  });
+  peer.on('open', function(){
+    console.log('connect to server');
+    var conn = peer.connect(downloader_uid, { reliable: true });
+    if (!uploadConnections[downloader_uid]) {
+      uploadConnections[downloader_uid] = {};
+    }
+    uploadConnections[downloader_uid][fileInfo.hash] = conn;
+    conn.on('open', function(){
+        console.log("connect to peer " + conn.peer);
     });
-    peer.on('open', function(){
-      console.log('connect to server');
-      var conn = peer.connect(downloader_uid, { reliable: true });
-      if (!uploadConnections[downloader_uid]) {
-        uploadConnections[downloader_uid] = {};
+    conn.on('data', function(data){
+      /*
+      uploader唯一可能接受downloader的信息就是上传的数据块范围信息
+       */
+      console.log('got data: ', data);
+      if (typeof(data.start)==='undefined' || typeof(data.end)==='undefined') {
+        console.log('block range format wrong!');
+        conn.close();
+      } else {
+        console.log('start: ' + data.start);
+        console.log('end: ' + data.end);
+        var lastBlockSize = BLOCK_SIZE;
+        if (data.end === fileInfo.totalFullBlocks) {
+          lastBlockSize = fileInfo.lastBlockSize;
+        }
+        window.socket.emit('send_data_blocks', {
+          path: fileInfo.path,
+          start: data.start, count: data.end-data.start,
+          lastBlockSize: lastBlockSize
+        });
       }
-      uploadConnections[downloader_uid][fileInfo.hash] = conn;
-      conn.on('open', function(){
-          console.log("connect to peer " + conn.peer);
-      });
-      conn.on('data', function(data){
-          /*
-          uploader唯一可能接受downloader的信息就是上传的数据块范围信息
-           */
-          console.log('got data: ', data);
-          if (typeof(data.start)==='undefined' || typeof(data.end)==='undefined') {
-              console.log('block range format wrong!');
-              conn.close();
-          } else {
-              console.log('start: ' + data.start);
-              console.log('end: ' + data.end);
-              var lastBlockSize = BLOCK_SIZE;
-              if (data.end === fileInfo.totalFullBlocks) {
-                  lastBlockSize = fileInfo.lastBlockSize;
-              }
-              window.socket.emit('send_data_blocks', {
-                path: fileInfo.path,
-                start: data.start, count: data.end-data.start,
-                lastBlockSize: lastBlockSize
-              });
-          }
-      });
-      conn.on('error', function(err){
-          console.log(err);
-      });
-      conn.on('close', function(){
-          console.log(conn.peer + ' has closed data connection');
-      });
+    });
+    conn.on('error', function(err){
+        console.log(err);
+    });
+    conn.on('close', function(){
+        console.log(conn.peer + ' has closed data connection');
+    });
   });
 }

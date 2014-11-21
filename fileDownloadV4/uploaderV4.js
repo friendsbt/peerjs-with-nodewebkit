@@ -7,7 +7,7 @@ var BLOCK_SIZE = settings.BLOCK_SIZE;
 
 var browserWindow;
 exports.initWindow = function(window) {
-    browserWindow = window;
+  browserWindow = window;
 };
 
 exports.initV4Upload = function(my_uid, downloader_uid, hash, filesize){
@@ -17,12 +17,12 @@ exports.initV4Upload = function(my_uid, downloader_uid, hash, filesize){
   browserWindow.console.log('lastblocksize:' + lastBlockSize.toString());
   var path = 'Advice.mp3';  // TODO: retrieve from db
   global.socket.emit('connect_downloader', {
-      'my_uid': my_uid,
-      'downloader_uid': downloader_uid,
-      'fileInfo': {
-        'totalFullBlocks': totalFullBlocks, 'lastBlockSize': lastBlockSize,
-        'size': hash, 'path': path
-      }
+    'my_uid': my_uid,
+    'downloader_uid': downloader_uid,
+    'fileInfo': {
+      'totalFullBlocks': totalFullBlocks, 'lastBlockSize': lastBlockSize,
+      'size': hash, 'path': path
+    }
   });
 };
 
@@ -33,23 +33,23 @@ global.socket.on('send_data_blocks', function(path, start, count, lastBlockSize)
   var file = raf(path);
   var index = 0;
   var intervalObj = setInterval(function () {
-      if (index >= count) {
-          clearInterval(intervalObj);
-          file.read(start, lastBlockSize, function (err, data) {
-              socket.emit('send', {index: index, data: utils.toArrayBuffer(data)});
-              browserWindow.console.log("last block sent");
-              file.close();
-              setTimeout(function () {
-                  global.socket.emit('control', {type: "disconnect"});
-              }, 100);
-          });
-      } else {
-          file.read(start, BLOCK_SIZE, function (err, data) {
-              global.socket.emit('send_block', {index: index, data: utils.toArrayBuffer(data)});
-              start += BLOCK_SIZE;
-              index++;
-          });
-      }
+    if (index >= count) {
+      clearInterval(intervalObj);
+      file.read(start, lastBlockSize, function (err, data) {
+        socket.emit('send', {index: index, data: utils.toArrayBuffer(data)});
+        browserWindow.console.log("last block sent");
+        file.close();
+        setTimeout(function () {
+          global.socket.emit('control', {type: "disconnect"});
+        }, 100);
+      });
+    } else {
+      file.read(start, BLOCK_SIZE, function (err, data) {
+        global.socket.emit('send_block', {index: index, data: utils.toArrayBuffer(data)});
+        start += BLOCK_SIZE;
+        index++;
+      });
+    }
   }, 1000);
 });
 

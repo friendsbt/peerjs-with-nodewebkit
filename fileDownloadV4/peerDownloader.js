@@ -2,5 +2,5 @@ function peerjsDownloader() {
 }
 
 peerjsDownloader.prototype.startFileDownload = function(states){
-    global.socket.emit('download', args);
+  global.socket.emit('download', args);
 };
