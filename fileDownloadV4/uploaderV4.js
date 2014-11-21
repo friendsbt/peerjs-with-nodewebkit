@@ -26,16 +26,17 @@ exports.initV4Upload = function(my_uid, downloader_uid, hash, filesize){
   });
 };
 
-global.socket.on('send_data_blocks', function(path, start, count, lastBlockSize) {
+global.socket.on('send_data_blocks', function(msg) {
   /*
   last_block_size = BLOCK_SIZE, unless the last block of file will be sent here
+  msg {path, start, end, count, lastBlockSize}
    */
-  var file = raf(path);
+  var file = raf(msg.path);
   var index = 0;
   var intervalObj = setInterval(function () {
-    if (index >= count) {
+    if (index >= msg.count) {
       clearInterval(intervalObj);
-      file.read(start, lastBlockSize, function (err, data) {
+      file.read(msg.start, msg.lastBlockSize, function (err, data) {
         socket.emit('send', {index: index, data: utils.toArrayBuffer(data)});
         browserWindow.console.log("last block sent");
         file.close();
@@ -46,7 +47,7 @@ global.socket.on('send_data_blocks', function(path, start, count, lastBlockSize)
     } else {
       file.read(start, BLOCK_SIZE, function (err, data) {
         global.socket.emit('send_block', {index: index, data: utils.toArrayBuffer(data)});
-        start += BLOCK_SIZE;
+        msg.start += BLOCK_SIZE;
         index++;
       });
     }

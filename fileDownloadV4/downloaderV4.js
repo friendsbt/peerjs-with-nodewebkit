@@ -9,12 +9,48 @@ var DOWNLOAD_OVER = settings.DownloadState['DOWNLOAD_OVER'],
     DOWNLOAD_ERR = settings.DownloadState['DOWNLOAD_ERR'],
     ALREADY_COMPLETE = settings.DownloadState['ALREADY_COMPLETE'];
 
-var downloaders = global.downloaders;
+
+var browserWindow;
+exports.initWindow = function(window) {
+  browserWindow = window;
+};
+var downloaders = {};  // node 环境中保存所有downloader
+
+global.socket.on('receive', function(info){
+  // TODO: update downloader states using global.downloaders[info.hash]
+
+  file.write(info.start * BLOCK_SIZE, info.data, function(err){
+    if(err) {
+      window.console.log(err);
+    }
+    // TODO: 何时接收完成
+    if (info.data.length < BLOCK_SIZE) {
+      window.console.log("receive complete, ", Date);
+      file.close();
+      var hash = parseInt(xxhash(0).update(fs.readFileSync('Advice.mp3')).digest());
+      var result;
+      if (hash === 473225162) {
+        result = "hash equal";
+      } else {
+        result = "hash not equal";
+      }
+      setTimeout(function(){
+        socket.emit('control', {type: 'result', result: result});
+      }, 100);
+    }
+  });
+});
 
 function v4Downloader(fileInfo, my_uid, uploader_uids, e,
         downloadOverCallback, downloadProgressCallback) {
   this.innerDownloader = new peerjsDownloader(fileInfo, my_uid, uploader_uids, e,
     downloadOverCallback, downloadProgressCallback);
+  this.fileInfo = fileInfo;
+  this.my_uid = my_uid;
+  this.uploaderUidList = uploader_uids.split(',');
+  this.e = e;
+  this.downloadOverCallback = downloadOverCallback;
+  this.downloadProgressCallback = downloadProgressCallback;
   this.states = {
     status: DOWNLOADING,
     progress: 0,
@@ -45,19 +81,18 @@ v4Downloader.prototype.cancelFileDownload = function() {
 v4Downloader.prototype.useForward = function() {
   // can't use Peerjs so use forward mode
   // TODO: safe delete this.innerDownloader, simple delete may leak memory
-  var states = this.states;
-  delete this.states;
   delete this.innerDownloader;
-  this.innerDownloader = new forwardDownloader(fileInfo, my_uid, uploader_uids,
-                              e, downloadOverCallback, downloadProgressCallback);
-  this.states = Object.copy(states);
+  this.innerDownloader = new forwardDownloader(
+    this.fileInfo, this.my_uid, this.uploaderUidList,
+    this.e, this.downloadOverCallback, this.downloadProgressCallback
+  );
   this.innerDownloader.startFileDownload();
 };
 
 exports.downloadFile = function(fileInfo, my_uid, uploader_uids,
                                 e, downloadOverCallback, downloadProgressCallback) {
   var d = new v4Downloader(fileInfo, my_uid, uploader_uids, e,
-      downloadOverCallback, downloadProgressCallback);
+                          downloadOverCallback, downloadProgressCallback);
   downloaders[fileInfo.hash] = d;
   d.startFileDownload();
 };
