@@ -1,49 +1,56 @@
 // NODE
+var fs = require('fs');
+var raf = require('random-access-file');
 var settings = require('settings');
+var utils = require('utils');
 var BLOCK_SIZE = settings.BLOCK_SIZE;
 
 var browserWindow;
 exports.initWindow = function(window) {
     browserWindow = window;
-}
-
-exports.initV4Upload = function(my_uid, downloader_uid, size){
-    var filesize = fs.statSync('Advice.mp3').size;  // 实际中使用参数size
-    var totalFullBlocks = parseInt((filesize - BLOCK_SIZE + 1) / BLOCK_SIZE);
-    var lastBlockSize = filesize - BLOCK_SIZE * totalFullBlocks;
-    browserWindow.console.log('totalblock:' + totalFullBlocks.toString());
-    browserWindow.console.log('lastblocksize:' + lastBlockSize.toString());
-    global.socket.emit('connect_downloader', {
-        'my_uid': my_uid,
-        'downloader_uid': downloader_uid,
-        'fileInfo': {'totalFullBlocks': totalFullBlocks, 'lastBlockSize': lastBlockSize}
-    });
 };
 
-global.socket.on('send_data_blocks', function(start, count, lastBlockSize) {
-    /*
-    last_block_size = BLOCK_SIZE, unless the last block of file will be sent here
-     */
-    var index = 0;
-    var intervalObj = setInterval(function () {
-        if (index >= count) {
-            clearInterval(intervalObj);
-            file.read(start, lastBlockSize, function (err, data) {
-                socket.emit('send', {index: index, data: toArrayBuffer(data)});
-                browserWindow.console.log("last block sent");
-                file.close();
-                setTimeout(function () {
-                    global.socket.emit('control', {type: "disconnect"});
-                }, 100);
-            });
-        } else {
-            file.read(start, BLOCK_SIZE, function (err, data) {
-                global.socket.emit('send_block', {index: index, data: toArrayBuffer(data)});
-                start += BLOCK_SIZE;
-                index++;
-            });
-        }
-    }, 1000);
+exports.initV4Upload = function(my_uid, downloader_uid, hash, filesize){
+  var totalFullBlocks = parseInt((filesize - BLOCK_SIZE + 1) / BLOCK_SIZE);
+  var lastBlockSize = filesize - BLOCK_SIZE * totalFullBlocks;
+  browserWindow.console.log('totalblock:' + totalFullBlocks.toString());
+  browserWindow.console.log('lastblocksize:' + lastBlockSize.toString());
+  var path = 'Advice.mp3';  // TODO: retrieve from db
+  global.socket.emit('connect_downloader', {
+      'my_uid': my_uid,
+      'downloader_uid': downloader_uid,
+      'fileInfo': {
+        'totalFullBlocks': totalFullBlocks, 'lastBlockSize': lastBlockSize,
+        'size': hash, 'path': path
+      }
+  });
+};
+
+global.socket.on('send_data_blocks', function(path, start, count, lastBlockSize) {
+  /*
+  last_block_size = BLOCK_SIZE, unless the last block of file will be sent here
+   */
+  var file = raf(path);
+  var index = 0;
+  var intervalObj = setInterval(function () {
+      if (index >= count) {
+          clearInterval(intervalObj);
+          file.read(start, lastBlockSize, function (err, data) {
+              socket.emit('send', {index: index, data: utils.toArrayBuffer(data)});
+              browserWindow.console.log("last block sent");
+              file.close();
+              setTimeout(function () {
+                  global.socket.emit('control', {type: "disconnect"});
+              }, 100);
+          });
+      } else {
+          file.read(start, BLOCK_SIZE, function (err, data) {
+              global.socket.emit('send_block', {index: index, data: utils.toArrayBuffer(data)});
+              start += BLOCK_SIZE;
+              index++;
+          });
+      }
+  }, 1000);
 });
 
 /* TODO: 之后要把upload_main里的逻辑移入initV4Upload

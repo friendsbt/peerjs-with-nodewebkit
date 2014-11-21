@@ -25,7 +25,7 @@ function v4Downloader(fileInfo, my_uid, uploader_uids, e,
 v4Downloader.prototype.startFileDownload = function() {
     // update v4Downloader's state in innerDownloader
     this.innerDownloader.startFileDownload(this.states);
-}
+};
 
 v4Downloader.prototype.pauseFileDownload = function() {
     this.states.status = PAUSED;
@@ -35,7 +35,7 @@ v4Downloader.prototype.pauseFileDownload = function() {
 v4Downloader.prototype.resumeFileDownload = function() {
     this.states.status = DOWNLOADING;
     this.innerDownloader.resumeFileDownload(this.states);
-}
+};
 
 v4Downloader.prototype.cancelFileDownload = function() {
     this.states.status = CANCELED;

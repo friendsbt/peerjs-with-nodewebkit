@@ -1,9 +1,11 @@
 // DOM
 
+// io is defined in socket.io.js
 window.socket = io.connect('http://localhost/', { port: 12345 });
 
 window.socket.on('connect_downloader', function(data){
-    upload(data.my_uid, data.downloader_uid, data.fileInfo);  // function in peerOps
+    // call function in peerOps
+    upload(data.my_uid, data.downloader_uid, data.fileInfo);
 });
 
 window.socket.on('send_block', function(data){

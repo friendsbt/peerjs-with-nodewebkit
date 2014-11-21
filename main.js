@@ -4,24 +4,6 @@ var xxhash = require('xxhashjs');
 
 var BLOCK_SIZE = 1024;
 
-function toArrayBuffer(buffer) {
-    var ab = new ArrayBuffer(buffer.length);
-    var view = new Uint8Array(ab);  // 只有创建了view才能给每个byte赋值
-    for (var i = 0; i < buffer.length; ++i) {
-        view[i] = buffer[i];
-    }
-    return ab;
-}
-
-function toBuffer(ab) {
-    var buffer = new Buffer(ab.byteLength);
-    var view = new Uint8Array(ab);
-    for (var i = 0; i < buffer.length; ++i) {
-        buffer[i] = view[i];
-    }
-    return buffer;
-}
-
 process.on("uncaughtException", function(err){
     fs.appendFileSync('err.txt', err);
 });
@@ -32,8 +14,8 @@ function main(window){
 	var http = require('http');
 	var server = http.createServer(app);
 	var io = require('socket.io').listen(server);
-    var fileDowloadV4 = require('fileDownloadV4/downloaderV4.js');
-    var fileUploadV4 = require('fileDownloadV4/uploaderV4.js');
+  var fileDowloadV4 = require('fileDownloadV4/downloaderV4.js');
+  var fileUploadV4 = require('fileDownloadV4/uploaderV4.js');
 
 	app.use(express.static(__dirname + '/static'));
 	app.set("views", __dirname+"/views/");
@@ -73,15 +55,17 @@ function main(window){
             });
         });
     });
-    global.downloaders = {};
+    global.downloaders = {};  // node 环境中保存所有downloader
     fileUploadV4.initWindow(window);
     if ("some condition") {
         fileDowloadV4.downloadFile(args);
     }
     if ("some condition2") {
-        var my_uid = 'zuoyao';
-        var downloader_uid = 'lizhihua';
-        fileUploadV4.initV4Upload(my_uid, downloader_uid, hash, size);
+      var my_uid = 'zuoyao';
+      var downloader_uid = 'lizhihua';
+      var filesize = fs.statSync('Advice.mp3').size;  // 实际中接收传来的size
+      var hash = 473225162;
+      fileUploadV4.initV4Upload(my_uid, downloader_uid, hash, filesize);
     }
 	server.listen(12345);
 }
