@@ -1,32 +1,26 @@
 // DOM
 
-var uploadConnections = {};  // 保存用于上传的conn信息
-var downloadConnections = {}; // 保存用于下载的conn信息
 var BLOCK_SIZE = 1024;
-
 
 var PeerWrapper = {
   initPeer: function(my_uid) {  // must be called first in main.js
     this.peer = new Peer(my_uid, {host: '182.92.191.93', port: 9000, debug: 3});
-  },
-  download: function() {
-    var peer = this.peer;
-    var start = 0;
-    peer.on('error', function(err){console.log(err)});
-    peer.on('disconnected', function(){
-      peer.reconnect();
+    var that = this;
+    this.uploadConnections = {};  // 保存用于上传的conn信息
+    this.downloadConnections = {}; // 保存用于下载的conn信息
+    this.peer.on('error', function(err){console.log(err)});
+    this.peer.on('disconnected', function(){
+      that.peer.reconnect();
     });
-    peer.on('open', function(){
+    this.peer.on('open', function(){
       console.log("connect to server");
     });
-    peer.on('connection', function(conn) {
-      console.log("Got connection from " + conn.peer);
-      connections[UPLOADER] = [];
-      connections[UPLOADER].push(conn);
-      addConnEventListener(conn);
-    });
-    function addConnEventListener(conn) {
-      // TODO: 下载端也应该记录connection
+    this.peer.on('connection', function(conn) {
+      console.log("Got connection from uploader: " + conn.peer);
+      if (!that.downloadConnections[conn.peer]) {
+        that.downloadConnections[conn.peer] = {};
+      }
+      that.downloadConnections[conn.peer][conn.label] = conn; // peer:id, label:hash
       conn.on('open', function() {
         console.log("data connection open");
         setTimeout(function () {  // this timeout is necessary
@@ -44,23 +38,25 @@ var PeerWrapper = {
           console.log(conn.peer + 'has closed data connection');
         });
       });
-    }
+    });
+  },
+  download: function() {
+    var that = this;
+    // TODO: what to do here?
   },
   upload: function(my_uid, downloader_uid, fileInfo){
-    var peer = this.peer;
-    peer.on('error', function(err){console.log(err)});
-    peer.on('disconnected', function(){
-      peer.reconnect();
-    });
-    peer.on('open', function(){
-      console.log('connect to server');
-      var conn = peer.connect(downloader_uid, { reliable: true });
-      if (!uploadConnections[downloader_uid]) {
-        uploadConnections[downloader_uid] = {};
+    var that = this;
+    if (!this.peer.disconnected) {  // check peer's connection to PeerServer
+      var conn = this.peer.connect(downloader_uid, {
+        reliable: true,
+        label: fileInfo.hash.toString()  // identify this data connection
+      });
+      if (!that.uploadConnections[downloader_uid]) {
+        that.uploadConnections[downloader_uid] = {};
       }
-      uploadConnections[downloader_uid][fileInfo.hash] = conn;
+      that.uploadConnections[downloader_uid][fileInfo.hash] = conn;
       conn.on('open', function(){
-        console.log("connect to peer " + conn.peer);
+        console.log("connect to downloader: " + conn.peer);
       });
       conn.on('data', function(data){
         /*
@@ -90,6 +86,8 @@ var PeerWrapper = {
       conn.on('close', function(){
         console.log(conn.peer + ' has closed data connection');
       });
-    });
+    } else {
+      throw PeerDisconnectedServerError("peer no longer connected to peerServer");
+    }
   }
 };
