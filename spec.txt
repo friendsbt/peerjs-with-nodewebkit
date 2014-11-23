@@ -12,7 +12,7 @@ uploader_Node        uploader_DOM   (NetWork)   downloader_DOM        downloader
                             <----------------------
     dataNode2DOM * 100
     ------------------->
-                                block * 100
+                                dataPeer2Peer * 100
                                ------------> (假定这100个block都收到)
 
                              rangeInfo, test=false
@@ -34,6 +34,7 @@ dataNode2DOM: Node环境给DOM环境的数据包, 用于上传
     hash: 文件hash
     content: 实际数据, BLOCK_SIZE
     index: block index
+    test: true/false
 
 "send_data_blocks" event msg, DOM环境给Node环境的控制信息, 用于上传
     path: 源文件路径
@@ -42,10 +43,12 @@ dataNode2DOM: Node环境给DOM环境的数据包, 用于上传
     lastBlockSize: 最后一个数据块大小, 大多时候是BLOCK_SIZE, 也有可能是realLastBlockSize
     downloader: 下载者uid
     hash: 文件hash
+    test: true/false
 
 dataPeer2Peer: 上传端发给下载端的数据包, 上传下载通用
     content: 实际数据, BLOCK_SIZE
     index: block index
+    [test]: true    如果有这个域, 表明是测试可靠性的数据包
 
 rangeInfo: 下载端给上传端的数据包, 标示了之后要传输的数据块的范围
     start: 起始
@@ -56,3 +59,4 @@ dataDOM2Node: DOM环境给Node环境的数据包, 用于下载
     hash: 文件hash
     content: 实际数据, BLOCK_SIZE
     index: block index
+    test: true/false

@@ -31,7 +31,7 @@ exports.initV4Upload = function(my_uid, downloader_uid, hash, filesize){
 global.socket.on('send_data_blocks', function(msg) {
   /*
   last_block_size = BLOCK_SIZE, unless the last block of file will be sent here
-  msg {path, start, end, lastBlockSize, downloader, hash}
+  msg {path, start, end, lastBlockSize, downloader, hash, test}
    */
   var file = raf(msg.path);
   var index = msg.start;
@@ -44,7 +44,8 @@ global.socket.on('send_data_blocks', function(msg) {
           content: utils.toArrayBuffer(data),
           hash: msg.hash,
           index: index,
-          downloader: msg.downloader
+          downloader: msg.downloader,
+          test: msg.test
         };
         global.socket.emit('send_block', dataNode2DOM);
         browserWindow.console.log("last block sent");
@@ -57,14 +58,15 @@ global.socket.on('send_data_blocks', function(msg) {
           content: utils.toArrayBuffer(data),
           hash: msg.hash,
           index: index,
-          downloader: msg.downloader
+          downloader: msg.downloader,
+          test: msg.test
         };
         global.socket.emit('send_block', dataNode2DOM);
         msg.start += BLOCK_SIZE;
         index++;
       });
     }
-  }, 1000);
+  }, 20);
 });
 
 /* TODO: 之后要把upload_main里的逻辑移入initV4Upload

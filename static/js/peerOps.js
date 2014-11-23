@@ -25,16 +25,14 @@ var PeerWrapper = {
       conn.on('open', function() {
         that.downloadConnections[conn.label][conn.peer] = conn;
         // TODO: range info for each connection should be determined in download func
-        that.rangeInfo.start = 0;
-        that.rangeInfo.end = 1000;
-        that.rangeInfo.test = false;
-        setTimeout(function() {  // this timeout is necessary
-          conn.send(that.rangeInfo);
-        }, 2000);
         conn.on('data', function(dataPeer2Peer) {
-          window.socket.emit('receive', {data: dataPeer2Peer.content, start: dataPeer2Peer.index});
-          start++;
-          console.log("got data", Date());
+          if (dataPeer2Peer.test) {
+            conn.metadata.count++;
+          } else {
+            window.socket.emit('receive', {data: dataPeer2Peer.content, start: dataPeer2Peer.index});
+            start++;
+            console.log("got data", Date());
+          }
         });
         conn.on('error', function(err) {
           console.log(err);
@@ -49,7 +47,20 @@ var PeerWrapper = {
     var that = this;
     // TODO: what to do here? 统计uploader连接数
     setTimeout(function(){
-      var uploaderCount = Object.keys(that.downloadConnections[hash]).length;
+      // 下载端发送可靠性测试rangeInfo
+      that.downloadConnections[hash].forEach(function(conn){
+        that.rangeInfo.start = 0;
+        that.rangeInfo.end = 10;
+        that.rangeInfo.test = true;
+        conn.send(that.rangeInfo);
+      });
+      setTimeout(function(){
+        that.downloadConnections[hash].forEach(function(conn){
+          if (conn.metadata.count === 10) {
+            // TODO: 可靠连接, 可以进行下一步工作, 例如删除不可靠连接
+          }
+        });
+      }, 1000);
       // set refuse more connection field
     }, 5000);
   },
@@ -58,7 +69,8 @@ var PeerWrapper = {
     if (!this.peer.disconnected) {  // check peer's connection to PeerServer
       var conn = this.peer.connect(downloader_uid, {
         reliable: true,
-        label: fileInfo.hash.toString()  // identify this data connection
+        label: fileInfo.hash.toString(),  // data connection ID
+        metadata: {count: 0}              // for reliablity test
       });
       if (!that.uploadConnections[fileInfo.hash]) {
         that.uploadConnections[fileInfo.hash] = {};
@@ -86,7 +98,8 @@ var PeerWrapper = {
             end: rangeInfo.end,
             lastBlockSize: lastBlockSize,
             downloader: conn.peer,
-            hash: conn.label
+            hash: conn.label,
+            test: rangeInfo.test
           });
         }
       });
@@ -103,6 +116,11 @@ var PeerWrapper = {
   sendBlock: function(dataNode2DOM){
     this.dataPeer2Peer.content = dataNode2DOM.content;
     this.dataPeer2Peer.index = dataNode2DOM.index;
+    if (dataNode2DOM.test) {
+      this.dataPeer2Peer.test = true;
+    } else if (this.dataPeer2Peer.test) {
+      delete this.dataPeer2Peer.test;
+    }
     PeerWrapper.uploadConnections[dataNode2DOM.hash][dataNode2DOM.downloader]
       .send(this.dataPeer2Peer);
     console.log("buffersize:",
