@@ -61,23 +61,26 @@ var PeerWrapper = {
       conn.on('open', function(){
         console.log("connect to downloader: " + conn.peer);
       });
-      conn.on('data', function(data){
-        // uploader唯一可能接受downloader的信息就是上传的数据块范围信息
-        console.log('got data: ', data);
-        if (typeof(data.start)==='undefined' || typeof(data.end)==='undefined') {
+      conn.on('data', function(rangeInfo){
+        console.log('got data: ', rangeInfo);
+        if (typeof(rangeInfo.start)==='undefined' || typeof(rangeInfo.end)==='undefined') {
           console.log('block range format wrong!');
           conn.close();
         } else {
-          console.log('start: ' + data.start);
-          console.log('end: ' + data.end);
+          console.log('start: ' + rangeInfo.start);
+          console.log('end: ' + rangeInfo.end);
           var lastBlockSize = BLOCK_SIZE;
-          if (data.end === fileInfo.totalFullBlocks) {
-            lastBlockSize = fileInfo.lastBlockSize;
+          if (rangeInfo.end === fileInfo.totalFullBlocks) {
+            // end 是文件真正的最后一块
+            lastBlockSize = fileInfo.realLastBlockSize;
           }
           window.socket.emit('send_data_blocks', {
             path: fileInfo.path,
-            start: data.start, count: data.end-data.start,
-            lastBlockSize: lastBlockSize
+            start: rangeInfo.start,
+            end: rangeInfo.end,
+            lastBlockSize: lastBlockSize,
+            downloader: conn.peer,
+            hash: conn.label
           });
         }
       });
@@ -90,5 +93,16 @@ var PeerWrapper = {
     } else {
       throw PeerDisconnectedServerError("peer no longer connected to peerServer");
     }
+  },
+  sendBlock: function(dataNode2DOM){
+    var dataPeer2Peer = {
+      content: dataNode2DOM.content,
+      index: dataNode2DOM.index
+    };
+    PeerWrapper.uploadConnections[dataNode2DOM.hash][dataNode2DOM.downloader]
+      .send(dataPeer2Peer);
+    console.log("buffersize:",
+      PeerWrapper.uploadConnections[dataNode2DOM.hash][dataNode2DOM.downloader].bufferSize);
+    console.log('block ', dataNode2DOM.index, "sent: ", Date());
   }
 };

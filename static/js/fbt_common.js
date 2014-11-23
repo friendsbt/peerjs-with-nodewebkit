@@ -4,20 +4,11 @@
 window.socket = io.connect('http://localhost/', { port: 12345 });
 
 window.socket.on('connect_downloader', function(data){
-  // call function in peerOps
   PeerWrapper.upload(data.my_uid, data.downloader_uid, data.fileInfo);
 });
 
 window.socket.on('send_block', function(dataNode2DOM){
-  var dataPeer2Peer = {
-    content: dataNode2DOM.content,
-    index: dataNode2DOM.index
-  };
-  PeerWrapper.uploadConnections[dataNode2DOM.hash][dataNode2DOM.downloader]
-    .send(dataPeer2Peer);
-  console.log("buffersize:",
-    PeerWrapper.uploadConnections[dataNode2DOM.hash][dataNode2DOM.downloader].bufferSize);
-  console.log('block ', dataNode2DOM.index, "sent: ", Date());
+  PeerWrapper.sendBlock(dataNode2DOM);
 });
 
 window.socket.on("initpeer", function(my_uid){

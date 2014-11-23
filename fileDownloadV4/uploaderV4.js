@@ -12,16 +12,18 @@ exports.initWindow = function(window) {
 
 exports.initV4Upload = function(my_uid, downloader_uid, hash, filesize){
   var totalFullBlocks = parseInt((filesize - BLOCK_SIZE + 1) / BLOCK_SIZE);
-  var lastBlockSize = filesize - BLOCK_SIZE * totalFullBlocks;
+  var realLastBlockSize = filesize - BLOCK_SIZE * totalFullBlocks;
   browserWindow.console.log('totalblock:' + totalFullBlocks.toString());
-  browserWindow.console.log('lastblocksize:' + lastBlockSize.toString());
+  browserWindow.console.log('lastblocksize:' + realLastBlockSize.toString());
   var path = 'Advice.mp3';  // TODO: retrieve from db
   global.socket.emit('connect_downloader', {
     'my_uid': my_uid,
     'downloader_uid': downloader_uid,
     'fileInfo': {
-      'totalFullBlocks': totalFullBlocks, 'lastBlockSize': lastBlockSize,
-      'size': hash, 'path': path
+      'totalFullBlocks': totalFullBlocks,
+      'realLastBlockSize': realLastBlockSize,
+      'size': hash,
+      'path': path
     }
   });
 };
@@ -29,24 +31,35 @@ exports.initV4Upload = function(my_uid, downloader_uid, hash, filesize){
 global.socket.on('send_data_blocks', function(msg) {
   /*
   last_block_size = BLOCK_SIZE, unless the last block of file will be sent here
-  msg {path, start, end, count, lastBlockSize}
+  msg {path, start, end, lastBlockSize, downloader, hash}
    */
   var file = raf(msg.path);
-  var index = 0;
-  var intervalObj = setInterval(function () {
-    if (index >= msg.count) {
+  var index = msg.start;
+  var dataNode2DOM;
+  var intervalObj = setInterval(function() {
+    if (index >= msg.end) {
       clearInterval(intervalObj);
-      file.read(msg.start, msg.lastBlockSize, function (err, data) {
-        socket.emit('send', {index: index, data: utils.toArrayBuffer(data)});
+      file.read(msg.start, msg.lastBlockSize, function(err, data) {
+        dataNode2DOM = {
+          content: utils.toArrayBuffer(data),
+          hash: msg.hash,
+          index: index,
+          downloader: msg.downloader
+        };
+        global.socket.emit('send_block', dataNode2DOM);
         browserWindow.console.log("last block sent");
         file.close();
-        setTimeout(function () {
-          global.socket.emit('control', {type: "disconnect"});
-        }, 100);
+        // 上传端不断开连接, 下载端确认hash之后断开所有连接
       });
     } else {
-      file.read(start, BLOCK_SIZE, function (err, data) {
-        global.socket.emit('send_block', {index: index, data: utils.toArrayBuffer(data)});
+      file.read(start, BLOCK_SIZE, function(err, data) {
+        dataNode2DOM = {
+          content: utils.toArrayBuffer(data),
+          hash: msg.hash,
+          index: index,
+          downloader: msg.downloader
+        };
+        global.socket.emit('send_block', dataNode2DOM);
         msg.start += BLOCK_SIZE;
         index++;
       });
