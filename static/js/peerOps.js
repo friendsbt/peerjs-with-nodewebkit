@@ -3,6 +3,8 @@
 var BLOCK_SIZE = 1024;
 
 var PeerWrapper = {
+  rangeInfo: {start: 0, end: 0, test: true},  // these two objects will be reused
+  dataPeer2Peer: {content: null, index: 0},
   initPeer: function(my_uid) {  // must be called first in main.js
     this.peer = new Peer(my_uid, {host: '182.92.191.93', port: 9000, debug: 3});
     var that = this;
@@ -20,10 +22,14 @@ var PeerWrapper = {
       if (!that.downloadConnections[conn.label]) {
         that.downloadConnections[conn.label] = {};
       }
-      that.downloadConnections[conn.label][conn.peer] = conn; // peer:id, label:hash
       conn.on('open', function() {
+        that.downloadConnections[conn.label][conn.peer] = conn;
+        // TODO: range info for each connection should be determined in download func
+        that.rangeInfo.start = 0;
+        that.rangeInfo.end = 1000;
+        that.rangeInfo.test = false;
         setTimeout(function() {  // this timeout is necessary
-          conn.send({start: 0, end: 1000});   // TODO: downloader should know real start&&end
+          conn.send(that.rangeInfo);
         }, 2000);
         conn.on('data', function(dataPeer2Peer) {
           window.socket.emit('receive', {data: dataPeer2Peer.content, start: dataPeer2Peer.index});
@@ -95,12 +101,10 @@ var PeerWrapper = {
     }
   },
   sendBlock: function(dataNode2DOM){
-    var dataPeer2Peer = {
-      content: dataNode2DOM.content,
-      index: dataNode2DOM.index
-    };
+    this.dataPeer2Peer.content = dataNode2DOM.content;
+    this.dataPeer2Peer.index = dataNode2DOM.index;
     PeerWrapper.uploadConnections[dataNode2DOM.hash][dataNode2DOM.downloader]
-      .send(dataPeer2Peer);
+      .send(this.dataPeer2Peer);
     console.log("buffersize:",
       PeerWrapper.uploadConnections[dataNode2DOM.hash][dataNode2DOM.downloader].bufferSize);
     console.log('block ', dataNode2DOM.index, "sent: ", Date());

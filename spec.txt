@@ -1,3 +1,30 @@
+
+一次文件下载的数据流, 仅画出一个dataConnection
+
+uploader_Node        uploader_DOM   (NetWork)   downloader_DOM        downloader_Node
+
+    "connect_downloader"
+    ------------------>
+                                 peerjs connect
+                              -------------------->
+
+                             rangeInfo, test=true
+                            <----------------------
+    dataNode2DOM * 100
+    ------------------->
+                                block * 100
+                               ------------> (假定这100个block都收到)
+
+                             rangeInfo, test=false
+                            <---------------------
+    dataNode2DOM * N
+    ------------------->                            (这3步实际上是并行的)
+                              dataPeer2Peer * N
+                             ------------------>
+                                                     dataDOM2Node * N
+                                                    --------------------->
+
+
 dataConnection
     label: hash
     peer: downloader/uploader
