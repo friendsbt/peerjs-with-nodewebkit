@@ -1,0 +1,17 @@
+dataConnection
+    label: hash
+
+dataNode2DOM: Node环境给DOM环境的数据包, 用于上传数据, 格式:
+    downloader: 下载者uid
+    hash: 文件hash
+    content: 实际数据, BLOCK_SIZE
+    index: block index
+
+dataPeer2Peer: 上传端发给下载端的数据包, 上传下载通用
+    content: 实际数据, BLOCK_SIZE
+    index: block index
+
+dataDOM2Node: , 用于下载, 格式:
+    content: 实际数据, BLOCK_SIZE
+    index: block index
+    hash: 文件hash

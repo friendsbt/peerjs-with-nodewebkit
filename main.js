@@ -1,5 +1,4 @@
 var fs = require('fs');
-var raf = require('random-access-file');
 var xxhash = require('xxhashjs');
 
 var BLOCK_SIZE = 1024;

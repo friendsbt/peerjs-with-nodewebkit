@@ -1,4 +1,5 @@
 // Node
+var raf = require('random-access-file');
 var forwardDownloader = require('./forward').forwardDownloader;
 var peerjsDownloader = require('./peerDownloader').peerjsDownloader;
 
@@ -16,29 +17,32 @@ exports.initWindow = function(window) {
 };
 var downloaders = {};  // node 环境中保存所有downloader
 
-global.socket.on('receive', function(info){
+global.socket.on('receive', function(dataDOM2Node){
   // TODO: update downloader states using global.downloaders[info.hash]
-
-  file.write(info.start * BLOCK_SIZE, info.data, function(err){
-    if(err) {
-      window.console.log(err);
-    }
-    // TODO: 何时接收完成
-    if (info.data.length < BLOCK_SIZE) {
-      window.console.log("receive complete, ", Date);
-      file.close();
-      var hash = parseInt(xxhash(0).update(fs.readFileSync('Advice.mp3')).digest());
-      var result;
-      if (hash === 473225162) {
-        result = "hash equal";
-      } else {
-        result = "hash not equal";
+  downloaders[dataDOM2Node.hash]['descriptor'].write(
+    dataDOM2Node.index * BLOCK_SIZE,
+    dataDOM2Node.content,
+    function(err) {
+      if (err) {
+        window.console.log(err);
       }
-      setTimeout(function(){
-        socket.emit('control', {type: 'result', result: result});
-      }, 100);
+      // TODO: 何时接收完成
+      if (dataDOM2Node.content.length < BLOCK_SIZE) {
+        window.console.log("receive complete, ", Date);
+        file.close();
+        var hash = parseInt(xxhash(0).update(fs.readFileSync('Advice.mp3')).digest());
+        var result;
+        if (hash === 473225162) {
+          result = "hash equal";
+        } else {
+          result = "hash not equal";
+        }
+        setTimeout(function () {
+          socket.emit('control', {type: 'result', result: result});
+        }, 100);
+      }
     }
-  });
+  );
 });
 
 function v4Downloader(fileInfo, my_uid, uploader_uids, e,
@@ -83,17 +87,30 @@ v4Downloader.prototype.useForward = function() {
   // TODO: safe delete this.innerDownloader, simple delete may leak memory
   delete this.innerDownloader;
   this.innerDownloader = new forwardDownloader(
-    this.fileInfo, this.my_uid, this.uploaderUidList,
-    this.e, this.downloadOverCallback, this.downloadProgressCallback
+    this.fileInfo,
+    this.my_uid,
+    this.uploaderUidList,
+    this.e,
+    this.downloadOverCallback,
+    this.downloadProgressCallback
   );
   this.innerDownloader.startFileDownload();
 };
 
 exports.downloadFile = function(fileInfo, my_uid, uploader_uids,
                                 e, downloadOverCallback, downloadProgressCallback) {
-  var d = new v4Downloader(fileInfo, my_uid, uploader_uids, e,
-                          downloadOverCallback, downloadProgressCallback);
-  downloaders[fileInfo.hash] = d;
+  var d = new v4Downloader(
+    fileInfo,
+    my_uid,
+    uploader_uids,
+    e,
+    downloadOverCallback,
+    downloadProgressCallback
+  );
+  downloaders[fileInfo.hash] = {};
+  downloaders[fileInfo.hash]['v4Downloader'] = d;
+  downloaders[fileInfo.hash]['path'] = fileInfo.file_to_save;
+  downloaders[fileInfo.hash]['descriptor'] = raf(fileInfo.file_to_save);
   d.startFileDownload();
 };
 

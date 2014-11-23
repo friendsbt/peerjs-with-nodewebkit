@@ -17,32 +17,35 @@ var PeerWrapper = {
     });
     this.peer.on('connection', function(conn) {
       console.log("Got connection from uploader: " + conn.peer);
-      if (!that.downloadConnections[conn.peer]) {
-        that.downloadConnections[conn.peer] = {};
+      if (!that.downloadConnections[conn.label]) {
+        that.downloadConnections[conn.label] = {};
       }
-      that.downloadConnections[conn.peer][conn.label] = conn; // peer:id, label:hash
+      that.downloadConnections[conn.label][conn.peer] = conn; // peer:id, label:hash
       conn.on('open', function() {
-        console.log("data connection open");
-        setTimeout(function () {  // this timeout is necessary
+        setTimeout(function() {  // this timeout is necessary
           conn.send({start: 0, end: 1000});   // TODO: downloader should know real start&&end
         }, 2000);
-        conn.on('data', function (data) {
-          window.socket.emit('receive', {data: data, start: start});
+        conn.on('data', function(dataPeer2Peer) {
+          window.socket.emit('receive', {data: dataPeer2Peer.content, start: dataPeer2Peer.index});
           start++;
           console.log("got data", Date());
         });
-        conn.on('error', function (err) {
+        conn.on('error', function(err) {
           console.log(err);
         });
-        conn.on('close', function () {
+        conn.on('close', function() {
           console.log(conn.peer + 'has closed data connection');
         });
       });
     });
   },
-  download: function() {
+  download: function(hash) {
     var that = this;
-    // TODO: what to do here?
+    // TODO: what to do here? 统计uploader连接数
+    setTimeout(function(){
+      var uploaderCount = Object.keys(that.downloadConnections[hash]).length;
+      // set refuse more connection field
+    }, 5000);
   },
   upload: function(my_uid, downloader_uid, fileInfo){
     var that = this;
@@ -51,17 +54,15 @@ var PeerWrapper = {
         reliable: true,
         label: fileInfo.hash.toString()  // identify this data connection
       });
-      if (!that.uploadConnections[downloader_uid]) {
-        that.uploadConnections[downloader_uid] = {};
+      if (!that.uploadConnections[fileInfo.hash]) {
+        that.uploadConnections[fileInfo.hash] = {};
       }
-      that.uploadConnections[downloader_uid][fileInfo.hash] = conn;
+      that.uploadConnections[fileInfo.hash][downloader_uid] = conn;
       conn.on('open', function(){
         console.log("connect to downloader: " + conn.peer);
       });
       conn.on('data', function(data){
-        /*
-         uploader唯一可能接受downloader的信息就是上传的数据块范围信息
-         */
+        // uploader唯一可能接受downloader的信息就是上传的数据块范围信息
         console.log('got data: ', data);
         if (typeof(data.start)==='undefined' || typeof(data.end)==='undefined') {
           console.log('block range format wrong!');

@@ -8,11 +8,16 @@ window.socket.on('connect_downloader', function(data){
   PeerWrapper.upload(data.my_uid, data.downloader_uid, data.fileInfo);
 });
 
-window.socket.on('send_block', function(data){
-  connections[DOWNLOADER][0].send(data.data);
-  console.log('is reliable:', connections[DOWNLOADER][0].reliable);
-  console.log("buffersize:", connections[DOWNLOADER][0].bufferSize);
-  console.log('block ', data.index, "sent: ", Date());
+window.socket.on('send_block', function(dataNode2DOM){
+  var dataPeer2Peer = {
+    content: dataNode2DOM.content,
+    index: dataNode2DOM.index
+  };
+  PeerWrapper.uploadConnections[dataNode2DOM.hash][dataNode2DOM.downloader]
+    .send(dataPeer2Peer);
+  console.log("buffersize:",
+    PeerWrapper.uploadConnections[dataNode2DOM.hash][dataNode2DOM.downloader].bufferSize);
+  console.log('block ', dataNode2DOM.index, "sent: ", Date());
 });
 
 window.socket.on("initpeer", function(my_uid){
