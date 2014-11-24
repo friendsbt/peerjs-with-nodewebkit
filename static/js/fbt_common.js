@@ -29,3 +29,17 @@ window.socket.on('control', function(message){
       console.log("wrong ctrl msg: ", message);
   }
 });
+
+/* 移植到FBT时才能够使用
+function updateProgressBarMessage(hash, msg) {
+  var FLAG = ['m', 'p', 'f'];
+  var id;
+  FLAG.some(function(flag){
+    id = hash + flag;
+    if ($("#container_download_resources").children("#item"+id).length > 0) {
+      $('#download_progress' + id).html(msg);
+      return true;
+    }
+  });
+}
+*/
