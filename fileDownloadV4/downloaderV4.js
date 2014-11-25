@@ -15,6 +15,7 @@ var browserWindow;
 exports.initWindow = function(window) {
   browserWindow = window;
 };
+
 var downloaders = {};  // node 环境中保存所有downloader
 
 global.socket.on('receive', function(dataDOM2Node){
@@ -47,8 +48,7 @@ global.socket.on('receive', function(dataDOM2Node){
 
 function v4Downloader(fileInfo, my_uid, uploader_uids, e,
         downloadOverCallback, downloadProgressCallback) {
-  this.innerDownloader = new peerjsDownloader(fileInfo, my_uid, uploader_uids, e,
-    downloadOverCallback, downloadProgressCallback);
+  this.innerDownloader = new peerjsDownloader(fileInfo.hash);
   this.fileInfo = fileInfo;
   this.my_uid = my_uid;
   this.uploaderUidList = uploader_uids.split(',');
@@ -64,7 +64,7 @@ function v4Downloader(fileInfo, my_uid, uploader_uids, e,
 
 v4Downloader.prototype.startFileDownload = function() {
   // update v4Downloader's state in innerDownloader
-  this.innerDownloader.startFileDownload(this.states);
+  this.innerDownloader.startFileDownload();
 };
 
 v4Downloader.prototype.pauseFileDownload = function() {

@@ -30,7 +30,7 @@ function main(window){
   // var my_uid = 'lizhihua';
 	io.sockets.on('connection', function(socket) {
     global.socket = socket;
-    socket.emit("initpeer", my_uid);
+    socket.emit("initpeer", my_uid);  // create Peer for download/upload
   });
   fileUploadV4.initWindow(window);
   fileDowloadV4.initWindow(window);

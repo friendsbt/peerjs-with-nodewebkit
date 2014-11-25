@@ -45,7 +45,6 @@ var PeerWrapper = {
   },
   download: function(hash) {
     var that = this;
-    // TODO: what to do here? 统计uploader连接数
     setTimeout(function(){
       // 下载端发送可靠性测试rangeInfo
       that.downloadConnections[hash].forEach(function(conn){

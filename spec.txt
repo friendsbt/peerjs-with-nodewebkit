@@ -1,6 +1,8 @@
 
 一次文件下载的数据流, 仅画出一个dataConnection
 
+initPeer()
+
 uploader_Node        uploader_DOM   (NetWork)   downloader_DOM        downloader_Node
 
     "connect_downloader"
@@ -10,10 +12,10 @@ uploader_Node        uploader_DOM   (NetWork)   downloader_DOM        downloader
 
                              rangeInfo, test=true
                             <----------------------
-    dataNode2DOM * 100
+    dataNode2DOM * 10
     ------------------->
-                                dataPeer2Peer * 100
-                               ------------> (假定这100个block都收到)
+                                dataPeer2Peer * 10
+                               ------------> (假定这10个block都收到)
 
                              rangeInfo, test=false
                             <---------------------
