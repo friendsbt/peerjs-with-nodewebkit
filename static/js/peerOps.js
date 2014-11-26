@@ -18,6 +18,7 @@ var PeerWrapper = {
       console.log("connect to server");
     });
     this.peer.on('connection', function(conn) {
+      // TODO: 确保上传端主动发起连接时不会引发这个事件
       console.log("Got connection from uploader: " + conn.peer);
       if (!that.downloadConnections[conn.label]) {
         that.downloadConnections[conn.label] = {};
@@ -38,7 +39,8 @@ var PeerWrapper = {
           console.log(err);
         });
         conn.on('close', function() {
-          console.log(conn.peer + 'has closed data connection');
+          console.log('uploader' + conn.peer + ' has closed data connection');
+          delete that.downloadConnections[conn.label][conn.peer];
         });
       });
     });
@@ -98,8 +100,9 @@ var PeerWrapper = {
           console.log('start: ' + rangeInfo.start);
           console.log('end: ' + rangeInfo.end);
           var lastBlockSize = BLOCK_SIZE;
-          if (rangeInfo.end === fileInfo.totalFullBlocks) {
-            // end 是文件真正的最后一块
+          if (rangeInfo.end >= fileInfo.totalFullBlocks) {
+            // end 永远是1024倍数, 有可能大于totalFullBlocks, 此时需要替换成真实值
+            rangeInfo.end = fileInfo.totalFullBlocks;
             lastBlockSize = fileInfo.realLastBlockSize;
           }
           window.socket.emit('send_data_blocks', {
@@ -117,8 +120,8 @@ var PeerWrapper = {
         console.log(err);
       });
       conn.on('close', function(){
-        console.log(conn.peer + ' has closed data connection');
-        delete that.uploadConnections[fileInfo][conn.peer];
+        console.log('downloader' + conn.peer + ' has closed data connection');
+        delete that.uploadConnections[fileInfo.hash][conn.peer];
       });
     } else {
       throw PeerDisconnectedServerError("peer no longer connected to peerServer");

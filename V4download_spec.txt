@@ -1,4 +1,9 @@
+Index
+1. 文件下载中的数据流
+2. 下载控制
 
+
+1. 文件下载中的数据流
 一次文件下载的数据流, 仅画出一个dataConnection
 
 initPeer()
@@ -62,3 +67,14 @@ dataDOM2Node: DOM环境给Node环境的数据包, 用于下载
     content: 实际数据, BLOCK_SIZE
     index: block index
     test: true/false
+
+
+2. 下载控制
+确定了可靠 uploader 之后, 由 downloader 控制整个下载流程
+part大小是1M, 即1024个block, 某个dataConn 当前下载的 Part 序号记录在metadata.downloadingPartIndex中
+暂停的实现就是downloader不再继续发送rangeInfo 给uploader
+当某个dataConn下完了1M 之后, emit 一个part-complete事件, 这时会分配下一个part 给它, 由它生成rangeInfo 发给uploader
+
+每个dataConn 同时记录一个状态metadata.complete, true 代表分配的part 已完成下载, false 表示正在下载
+metadata.complete用于继续下载时分配part, 遍历所有dataConn, 给那些complete=true 的新part
+那些complete=false 之后肯定会emit part-complete

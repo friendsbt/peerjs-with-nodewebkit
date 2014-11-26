@@ -33,13 +33,13 @@ global.socket.on('send_data_blocks', function(msg) {
   last_block_size = BLOCK_SIZE, unless the last block of file will be sent here
   msg {path, start, end, lastBlockSize, downloader, hash, test}
    */
-  var file = raf(msg.path);
+  var file = raf(msg.path);  // TODO: record this file descriptor
   var index = msg.start;
   var dataNode2DOM;
   var intervalObj = setInterval(function() {
     if (index >= msg.end) {
       clearInterval(intervalObj);
-      file.read(msg.start, msg.lastBlockSize, function(err, data) {
+      file.read(index * BLOCK_SIZE, msg.lastBlockSize, function(err, data) {
         dataNode2DOM = {
           content: utils.toArrayBuffer(data),
           hash: msg.hash,
@@ -53,7 +53,7 @@ global.socket.on('send_data_blocks', function(msg) {
         // 上传端不断开连接, 下载端确认hash之后断开所有连接
       });
     } else {
-      file.read(start, BLOCK_SIZE, function(err, data) {
+      file.read(index * BLOCK_SIZE, BLOCK_SIZE, function(err, data) {
         dataNode2DOM = {
           content: utils.toArrayBuffer(data),
           hash: msg.hash,
