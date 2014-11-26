@@ -1,6 +1,8 @@
 // DOM
 
 var BLOCK_SIZE = 1024;
+var BLOCK_IN_PART = 1024;
+var e = new EventEmitter();
 
 var PeerWrapper = {
   rangeInfo: {start: 0, end: 0, test: true},  // these two objects will be reused
@@ -25,14 +27,17 @@ var PeerWrapper = {
       }
       conn.on('open', function() {
         that.downloadConnections[conn.label][conn.peer] = conn;
-        // TODO: range info for each connection should be determined in download func
+        conn.metadata.complete = true;
         conn.on('data', function(dataPeer2Peer) {
           if (dataPeer2Peer.test) {
             conn.metadata.count++;
           } else {
-            window.socket.emit('receive', {data: dataPeer2Peer.content, start: dataPeer2Peer.index});
-            start++;
+            window.socket.emit('receive', {data: dataPeer2Peer.content, index: dataPeer2Peer.index});
             console.log("got data", Date());
+            if (dataPeer2Peer.rangeLastBlock) { // ready for next downloading next part
+              conn.metadata.complete = true;
+              e.emitEvent('part-complete-' + conn.label, conn.peer);
+            }
           }
         });
         conn.on('error', function(err) {
@@ -45,8 +50,26 @@ var PeerWrapper = {
       });
     });
   },
-  download: function(hash) {
+  download: function(hash, totalparts) {
     var that = this;
+    var conn;
+    var parts_left = [];
+    for (var i = 0; i < totalparts; i++) {
+      parts_left.push(i);
+    }
+    // TODO: what if parts_left.length == 0
+    // TODO: when to remove this listener
+    e.addListener('part-compelte-' + hash, function(uploader){
+      if (parts_left.length > 0) {
+        conn = that.downloadConnections[hash][uploader];
+        conn.metadata.complete = false;
+        that.rangeInfo.start = BLOCK_IN_PART * parts_left.shift();
+        that.rangeInfo.end = that.rangeInfo.start + BLOCK_IN_PART;
+        conn.metadata.downloadingPartIndex = that.rangeInfo.start;
+        that.rangeInfo.test = false;
+        conn.send(that.rangeInfo);
+      }
+    });
     setTimeout(function(){
       // 下载端发送可靠性测试rangeInfo
       for (var uploader_uid in that.downloadConnections[hash]) {
@@ -57,15 +80,23 @@ var PeerWrapper = {
           that.downloadConnections[hash][uploader_uid].send(that.rangeInfo);
         }
       }
-      setTimeout(function() {
+      setTimeout(function() { // 初始下载任务
         var unreliableUploaders = [];
         for (var uploader_uid in that.downloadConnections[hash]) {
           if (that.downloadConnections[hash].hasOwnProperty(uploader_uid)) {
-            if (that.downloadConnections[hash][uploader_uid].metadata.count === 10) {
-              // TODO: 可靠连接, 可以进行下一步工作, 例如删除不可靠连接
+            conn = that.downloadConnections[hash][uploader_uid];
+            if (conn.metadata.count === 10) {
+              if (parts_left.length > 0) {
+                conn.metadata.complete = false;   // set status
+                that.rangeInfo.start = BLOCK_IN_PART * parts_left.shift();
+                that.rangeInfo.end = that.rangeInfo.start + BLOCK_IN_PART;
+                conn.metadata.downloadingPartIndex = that.rangeInfo.start;
+                that.rangeInfo.test = false;  // real data package, not testing package
+                conn.send(that.rangeInfo);
+              }
             } else {
               unreliableUploaders.push(uploader_uid);
-              that.downloadConnections[hash][uploader_uid].close(); // notify uploader
+              conn.close(); // notify uploader
             }
           }
         }
@@ -130,10 +161,16 @@ var PeerWrapper = {
   sendBlock: function(dataNode2DOM){
     this.dataPeer2Peer.content = dataNode2DOM.content;
     this.dataPeer2Peer.index = dataNode2DOM.index;
+    // set or remove test/rangeLastBlock attribute
     if (dataNode2DOM.test) {
       this.dataPeer2Peer.test = true;
     } else if (this.dataPeer2Peer.test) {
       delete this.dataPeer2Peer.test;
+    }
+    if (dataNode2DOM.rangeLastBlock) {
+      this.dataPeer2Peer.rangeLastBlock = true;
+    } else if (this.dataPeer2Peer.rangeLastBlock) {
+      delete this.dataPeer2Peer.rangeLastBlock;
     }
     PeerWrapper.uploadConnections[dataNode2DOM.hash][dataNode2DOM.downloader]
       .send(this.dataPeer2Peer);

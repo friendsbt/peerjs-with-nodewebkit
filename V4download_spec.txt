@@ -42,6 +42,7 @@ dataNode2DOM: Node环境给DOM环境的数据包, 用于上传
     content: 实际数据, BLOCK_SIZE
     index: block index
     test: true/false
+    rangeLastBlock: true/false, 是否是这个rangeInfo 的最后一个块
 
 "send_data_blocks" event msg, DOM环境给Node环境的控制信息, 用于上传
     path: 源文件路径
@@ -56,6 +57,7 @@ dataPeer2Peer: 上传端发给下载端的数据包, 上传下载通用
     content: 实际数据, BLOCK_SIZE
     index: block index
     [test]: true    如果有这个域, 表明是测试可靠性的数据包
+    [rangeLastBlock]: true     有这个域, 说明part 下载完成, 因为Peerjs 能确保包得到达顺序
 
 rangeInfo: 下载端给上传端的数据包, 标示了之后要传输的数据块的范围
     start: 起始
@@ -74,6 +76,7 @@ dataDOM2Node: DOM环境给Node环境的数据包, 用于下载
 part大小是1M, 即1024个block, 某个dataConn 当前下载的 Part 序号记录在metadata.downloadingPartIndex中
 暂停的实现就是downloader不再继续发送rangeInfo 给uploader
 当某个dataConn下完了1M 之后, emit 一个part-complete事件, 这时会分配下一个part 给它, 由它生成rangeInfo 发给uploader
+(EventEmitter.js https://github.com/Wolfy87/EventEmitter/blob/master/EventEmitter.js)
 
 每个dataConn 同时记录一个状态metadata.complete, true 代表分配的part 已完成下载, false 表示正在下载
 metadata.complete用于继续下载时分配part, 遍历所有dataConn, 给那些complete=true 的新part

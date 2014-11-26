@@ -45,7 +45,8 @@ global.socket.on('send_data_blocks', function(msg) {
           hash: msg.hash,
           index: index,
           downloader: msg.downloader,
-          test: msg.test
+          test: msg.test,
+          rangeLastBlock: true
         };
         global.socket.emit('send_block', dataNode2DOM);
         browserWindow.console.log("last block sent");
@@ -59,7 +60,8 @@ global.socket.on('send_data_blocks', function(msg) {
           hash: msg.hash,
           index: index,
           downloader: msg.downloader,
-          test: msg.test
+          test: msg.test,
+          rangeLastBlock: false
         };
         global.socket.emit('send_block', dataNode2DOM);
         msg.start += BLOCK_SIZE;

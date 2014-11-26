@@ -9,3 +9,6 @@ var DownloadState = {
 
 exports.DownloadState = DownloadState;
 exports.BLOCK_SIZE = 1024;
+var BLOCK_IN_PART = 1024;
+exports.partsize = BLOCK_IN_PART * exports.BLOCK_SIZE;
+

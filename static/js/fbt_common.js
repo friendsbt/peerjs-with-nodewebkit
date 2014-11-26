@@ -13,24 +13,10 @@ window.socket.on('send_block', function(dataNode2DOM){
   PeerWrapper.sendBlock(dataNode2DOM);
 });
 
-window.socket.on('download', function(hash){
-  PeerWrapper.download(hash);
+window.socket.on('download', function(downloadFileInfo){
+  PeerWrapper.download(downloadFileInfo.hash, downloadFileInfo.totalparts);
 });
 
-window.socket.on('control', function(message){
-  switch(message.type) {
-    case "disconnect":
-      connections[DOWNLOADER][0].close();
-      peer.disconnect();
-      break;
-    case "result":
-      console.log(message.result);
-      peer.disconnect();
-      break;
-    default:
-      console.log("wrong ctrl msg: ", message);
-  }
-});
 
 /* 移植到FBT时才能够使用
 function updateProgressBarMessage(hash, msg) {

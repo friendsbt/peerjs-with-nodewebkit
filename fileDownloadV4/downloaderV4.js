@@ -1,5 +1,6 @@
 // Node
 var raf = require('random-access-file');
+var xxhash = require('xxhashjs');
 var forwardDownloader = require('./forward').forwardDownloader;
 var peerjsDownloader = require('./peerDownloader').peerjsDownloader;
 
@@ -30,17 +31,13 @@ global.socket.on('receive', function(dataDOM2Node){
       // TODO: 何时接收完成
       if (dataDOM2Node.content.length < BLOCK_SIZE) {
         window.console.log("receive complete, ", Date);
-        file.close();
+        downloaders[dataDOM2Node.hash]['descriptor'].close();
         var hash = parseInt(xxhash(0).update(fs.readFileSync('Advice.mp3')).digest());
-        var result;
         if (hash === 473225162) {
-          result = "hash equal";
+          browserWindow.console.log("hash equal");
         } else {
-          result = "hash not equal";
+          browserWindow.console.log("hash not equal");
         }
-        setTimeout(function () {
-          socket.emit('control', {type: 'result', result: result});
-        }, 100);
       }
     }
   );
@@ -48,7 +45,7 @@ global.socket.on('receive', function(dataDOM2Node){
 
 function v4Downloader(fileInfo, my_uid, uploader_uids, e,
         downloadOverCallback, downloadProgressCallback) {
-  this.innerDownloader = new peerjsDownloader(fileInfo.hash);
+  this.innerDownloader = new peerjsDownloader(fileInfo);
   this.fileInfo = fileInfo;
   this.my_uid = my_uid;
   this.uploaderUidList = uploader_uids.split(',');
@@ -100,7 +97,7 @@ v4Downloader.prototype.useForward = function() {
 exports.downloadFile = function(fileInfo, my_uid, uploader_uids,
                                 e, downloadOverCallback, downloadProgressCallback) {
   var d = new v4Downloader(
-    fileInfo,
+    fileInfo,   // {size, hash, file_to_save}
     my_uid,
     uploader_uids,
     e,
