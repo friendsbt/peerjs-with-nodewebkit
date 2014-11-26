@@ -47,17 +47,28 @@ var PeerWrapper = {
     var that = this;
     setTimeout(function(){
       // 下载端发送可靠性测试rangeInfo
-      that.downloadConnections[hash].forEach(function(conn){
-        that.rangeInfo.start = 0;
-        that.rangeInfo.end = 10;
-        that.rangeInfo.test = true;
-        conn.send(that.rangeInfo);
-      });
-      setTimeout(function(){
-        that.downloadConnections[hash].forEach(function(conn){
-          if (conn.metadata.count === 10) {
-            // TODO: 可靠连接, 可以进行下一步工作, 例如删除不可靠连接
+      for (var uploader_uid in that.downloadConnections[hash]) {
+        if (that.downloadConnections[hash].hasOwnProperty(uploader_uid)) {
+          that.rangeInfo.start = 0;
+          that.rangeInfo.end = 10;
+          that.rangeInfo.test = true;
+          that.downloadConnections[hash][uploader_uid].send(that.rangeInfo);
+        }
+      }
+      setTimeout(function() {
+        var unreliableUploaders = [];
+        for (var uploader_uid in that.downloadConnections[hash]) {
+          if (that.downloadConnections[hash].hasOwnProperty(uploader_uid)) {
+            if (that.downloadConnections[hash][uploader_uid].metadata.count === 10) {
+              // TODO: 可靠连接, 可以进行下一步工作, 例如删除不可靠连接
+            } else {
+              unreliableUploaders.push(uploader_uid);
+              that.downloadConnections[hash][uploader_uid].close(); // notify uploader
+            }
           }
+        }
+        unreliableUploaders.forEach(function(unreliableUploader){
+          delete that.downloadConnections[hash][unreliableUploader];
         });
       }, 1000);
       // set refuse more connection field
@@ -107,6 +118,7 @@ var PeerWrapper = {
       });
       conn.on('close', function(){
         console.log(conn.peer + ' has closed data connection');
+        delete that.uploadConnections[fileInfo][conn.peer];
       });
     } else {
       throw PeerDisconnectedServerError("peer no longer connected to peerServer");
