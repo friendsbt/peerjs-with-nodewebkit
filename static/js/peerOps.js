@@ -72,6 +72,7 @@ var PeerWrapper = {
     });
     setTimeout(function(){
       // 下载端发送可靠性测试rangeInfo
+      // TODO: set refuse more connection field
       for (var uploader_uid in that.downloadConnections[hash]) {
         if (that.downloadConnections[hash].hasOwnProperty(uploader_uid)) {
           that.rangeInfo.start = 0;
@@ -80,12 +81,13 @@ var PeerWrapper = {
           that.downloadConnections[hash][uploader_uid].send(that.rangeInfo);
         }
       }
-      setTimeout(function() { // 初始下载任务
+      setTimeout(function() { // 等待1s, 确定可靠连接, 分配初始下载任务
         var unreliableUploaders = [];
         for (var uploader_uid in that.downloadConnections[hash]) {
           if (that.downloadConnections[hash].hasOwnProperty(uploader_uid)) {
             conn = that.downloadConnections[hash][uploader_uid];
             if (conn.metadata.count === 10) {
+              console.log("reliable uploader: ", conn.peer);
               if (parts_left.length > 0) {
                 conn.metadata.complete = false;   // set status
                 that.rangeInfo.start = BLOCK_IN_PART * parts_left.shift();
@@ -104,7 +106,6 @@ var PeerWrapper = {
           delete that.downloadConnections[hash][unreliableUploader];
         });
       }, 1000);
-      // set refuse more connection field
     }, 5000);
   },
   upload: function(my_uid, downloader_uid, fileInfo){
@@ -128,8 +129,6 @@ var PeerWrapper = {
           console.log('block range format wrong!');
           conn.close();
         } else {
-          console.log('start: ' + rangeInfo.start);
-          console.log('end: ' + rangeInfo.end);
           var lastBlockSize = BLOCK_SIZE;
           if (rangeInfo.end >= fileInfo.totalFullBlocks) {
             // end 永远是1024倍数, 有可能大于totalFullBlocks, 此时需要替换成真实值
@@ -169,12 +168,13 @@ var PeerWrapper = {
     }
     if (dataNode2DOM.rangeLastBlock) {
       this.dataPeer2Peer.rangeLastBlock = true;
+      console.log('last block of this part ', Date());
     } else if (this.dataPeer2Peer.rangeLastBlock) {
       delete this.dataPeer2Peer.rangeLastBlock;
     }
     PeerWrapper.uploadConnections[dataNode2DOM.hash][dataNode2DOM.downloader]
       .send(this.dataPeer2Peer);
-    console.log("buffersize:",
+    console.log("buffersize: ",
       PeerWrapper.uploadConnections[dataNode2DOM.hash][dataNode2DOM.downloader].bufferSize);
     console.log('block ', dataNode2DOM.index, "sent: ", Date());
   }

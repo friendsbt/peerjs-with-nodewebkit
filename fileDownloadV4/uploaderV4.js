@@ -22,7 +22,7 @@ exports.initV4Upload = function(my_uid, downloader_uid, hash, filesize){
     'fileInfo': {
       'totalFullBlocks': totalFullBlocks,
       'realLastBlockSize': realLastBlockSize,
-      'size': hash,
+      'hash': hash,
       'path': path
     }
   });
@@ -49,7 +49,6 @@ global.socket.on('send_data_blocks', function(msg) {
           rangeLastBlock: true
         };
         global.socket.emit('send_block', dataNode2DOM);
-        browserWindow.console.log("last block sent");
         file.close();
         // 上传端不断开连接, 下载端确认hash之后断开所有连接
       });

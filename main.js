@@ -13,8 +13,7 @@ function main(window){
 	var http = require('http');
 	var server = http.createServer(app);
 	var io = require('socket.io').listen(server);
-  var fileDowloadV4 = require('fileDownloadV4/downloaderV4.js');
-  var fileUploadV4 = require('fileDownloadV4/uploaderV4.js');
+  server.listen(12345);
 
 	app.use(express.static(__dirname + '/static'));
 	app.set("views", __dirname+"/views/");
@@ -26,8 +25,12 @@ function main(window){
 	app.get("/", function(req,res){
 		res.render("index");
 	});
+
+  var fileDowloadV4 = require('fileDownloadV4/downloaderV4.js');
+  var fileUploadV4 = require('fileDownloadV4/uploaderV4.js');
   var my_uid = 'zuoyao';
   // var my_uid = 'lizhihua';
+
 	io.sockets.on('connection', function(socket) {
     global.socket = socket;
     socket.emit("initpeer", my_uid);  // create Peer for download/upload
@@ -35,8 +38,9 @@ function main(window){
   fileUploadV4.initWindow(window);
   fileDowloadV4.initWindow(window);
   if (my_uid === 'lizhihua') {
+    var uploader_uids = 'zuoyao';
     var fileInfo = {hash: 473225162, size: 11156847, file_to_save: 'Advice.mp3'};
-    fileDowloadV4.downloadFile(fileInfo, 'lizhihua', ['zuoyao']);
+    fileDowloadV4.downloadFile(fileInfo, my_uid, uploader_uids);
   }
   if (my_uid === 'zuoyao') {
     var downloader_uid = 'lizhihua';
@@ -44,7 +48,6 @@ function main(window){
     var hash = 473225162;
     fileUploadV4.initV4Upload(my_uid, downloader_uid, hash, filesize);
   }
-	server.listen(12345);
 }
 
 exports.main = main;
