@@ -2,6 +2,7 @@
 
 var BLOCK_SIZE = 1024;
 var BLOCK_IN_PART = 1024;
+var MAX_TRY = 3;
 var e = new EventEmitter();
 
 var PeerWrapper = {
@@ -28,6 +29,7 @@ var PeerWrapper = {
         that.downloadConnections[conn.label] = {};
       }
       conn.on('open', function() {
+        console.log("connected to downloader: " + conn.peer);
         that.downloadConnections[conn.label][conn.peer] = conn;
         conn.metadata.complete = true;
         conn.on('data', function(dataPeer2Peer) {
@@ -81,6 +83,7 @@ var PeerWrapper = {
           that.rangeInfo.end = 10;
           that.rangeInfo.test = true;
           that.downloadConnections[hash][uploader_uid].send(that.rangeInfo);
+          console.log("test rangeInfo sent to ", uploader_uid);
         }
       }
       setTimeout(function() { // 等待1s, 确定可靠连接, 分配初始下载任务
@@ -108,57 +111,66 @@ var PeerWrapper = {
           delete that.downloadConnections[hash][unreliableUploader];
         });
       }, 1000);
-    }, 5000);
+    }, 15000);  // for test: 15s, set to 5s when used in production
   },
-  upload: function(my_uid, downloader_uid, fileInfo){
+  upload: function(my_uid, downloader_uid, fileInfo, try_count){
     var that = this;
+    var connected = false;
+    var conn;
     if (!this.peer.disconnected) {  // check peer's connection to PeerServer
-      var conn = this.peer.connect(downloader_uid, {
-        reliable: true,
-        label: fileInfo.hash.toString(),  // data connection ID
-        metadata: {count: 0}              // for reliablity test
-      });
-      // TODO: uploader 多次尝试连接
-      if (!that.uploadConnections[fileInfo.hash]) {
-        that.uploadConnections[fileInfo.hash] = {};
-      }
-      that.uploadConnections[fileInfo.hash][downloader_uid] = conn;
+      var peerConnConfig = {
+          reliable: true,
+          label: fileInfo.hash.toString(),  // data connection ID
+          metadata: {count: 0}              // for reliablity test
+      };
+      conn = that.peer.connect(downloader_uid, peerConnConfig);
       conn.on('open', function(){
-        console.log("connect to downloader: " + conn.peer);
-      });
-      conn.on('data', function(rangeInfo){
-        console.log('got data: ', rangeInfo);
-        if (typeof(rangeInfo.start)==='undefined' || typeof(rangeInfo.end)==='undefined') {
-          console.log('block range format wrong!');
-          conn.close();
-        } else {
-          var lastBlockSize = BLOCK_SIZE;
-          if (rangeInfo.end >= fileInfo.totalFullBlocks) {
-            // end 永远是1024倍数, 有可能大于totalFullBlocks, 此时需要替换成真实值
-            rangeInfo.end = fileInfo.totalFullBlocks;
-            lastBlockSize = fileInfo.realLastBlockSize;
-          }
-          window.socket.emit('send_data_blocks', {
-            path: fileInfo.path,
-            start: rangeInfo.start,
-            end: rangeInfo.end,
-            lastBlockSize: lastBlockSize,
-            downloader: conn.peer,
-            hash: conn.label,
-            test: rangeInfo.test
-          });
+        connected = true;   // set flag = true so don't connect again
+        console.log("connected to downloader: " + conn.peer);
+        if (!that.uploadConnections[fileInfo.hash]) {
+          that.uploadConnections[fileInfo.hash] = {};
         }
+        that.uploadConnections[fileInfo.hash][downloader_uid] = conn;
+        conn.on('data', function(rangeInfo){
+          console.log('got data: ', rangeInfo);
+          if (typeof(rangeInfo.start)==='undefined' || typeof(rangeInfo.end)==='undefined') {
+            console.log('block range format wrong!');
+            conn.close();
+          } else {
+            var lastBlockSize = BLOCK_SIZE;
+            if (rangeInfo.end >= fileInfo.totalFullBlocks) {
+              // end 永远是1024倍数, 有可能大于totalFullBlocks, 此时需要替换成真实值
+              rangeInfo.end = fileInfo.totalFullBlocks;
+              lastBlockSize = fileInfo.realLastBlockSize;
+            }
+            window.socket.emit('send_data_blocks', {
+              path: fileInfo.path,
+              start: rangeInfo.start,
+              end: rangeInfo.end,
+              lastBlockSize: lastBlockSize,
+              downloader: conn.peer,
+              hash: conn.label,
+              test: rangeInfo.test
+            });
+          }
+        });
+        conn.on('close', function(){  // 只处理对方conn.close事件, 不管重连时的close
+          console.log('downloader' + conn.peer + ' has closed data connection');
+          delete that.uploadConnections[fileInfo.hash][conn.peer];
+        });
       });
       conn.on('error', function(err){
         console.log(err);
       });
-      conn.on('close', function(){
-        console.log('downloader' + conn.peer + ' has closed data connection');
-        delete that.uploadConnections[fileInfo.hash][conn.peer];
-      });
     } else {
       throw PeerDisconnectedServerError("peer no longer connected to peerServer");
     }
+    setTimeout(function(){  // try 3 times if connection failed
+      if (try_count < 3 && !connected) {
+        conn.close();
+        that.upload(my_uid, downloader_uid, fileInfo, try_count+1);
+      }
+    }, 2000);
   },
   sendBlock: function(dataNode2DOM){
     this.dataPeer2Peer.content = dataNode2DOM.content;
