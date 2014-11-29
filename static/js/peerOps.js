@@ -34,6 +34,7 @@ var PeerWrapper = {
         conn.metadata.complete = true;
         conn.on('data', function(dataPeer2Peer) {
           if (dataPeer2Peer.test) {
+            console.log("got test package from ", conn.peer);
             conn.metadata.count++;
           } else {
             window.socket.emit('receive', {data: dataPeer2Peer.content, index: dataPeer2Peer.index});
@@ -48,7 +49,7 @@ var PeerWrapper = {
           console.log(err);
         });
         conn.on('close', function() {
-          console.log('uploader' + conn.peer + ' has closed data connection');
+          console.log('uploader ' + conn.peer + ' has closed data connection');
           delete that.downloadConnections[conn.label][conn.peer];
         });
       });
@@ -155,7 +156,7 @@ var PeerWrapper = {
           }
         });
         conn.on('close', function(){  // 只处理对方conn.close事件, 不管重连时的close
-          console.log('downloader' + conn.peer + ' has closed data connection');
+          console.log('downloader ' + conn.peer + ' has closed data connection');
           delete that.uploadConnections[fileInfo.hash][conn.peer];
         });
       });
