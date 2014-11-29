@@ -14,6 +14,7 @@ window.socket.on('send_block', function(dataNode2DOM){
 });
 
 window.socket.on('download', function(downloadFileInfo){
+  console.log("downloadFileInfo: ", stringify(downloadFileInfo));
   PeerWrapper.download(downloadFileInfo.hash, downloadFileInfo.totalparts);
 });
 

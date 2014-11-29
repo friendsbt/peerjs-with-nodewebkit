@@ -3,6 +3,7 @@ var raf = require('random-access-file');
 var xxhash = require('xxhashjs');
 var forwardDownloader = require('./forward').forwardDownloader;
 var peerjsDownloader = require('./peerDownloader').peerjsDownloader;
+var settings = require('./settings');
 
 var DOWNLOAD_OVER = settings.DownloadState['DOWNLOAD_OVER'],
     DOWNLOADING = settings.DownloadState['DOWNLOADING'],

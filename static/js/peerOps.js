@@ -12,7 +12,9 @@ var PeerWrapper = {
     var that = this;
     this.uploadConnections = {};  // 保存用于上传的conn信息
     this.downloadConnections = {}; // 保存用于下载的conn信息
-    this.peer.on('error', function(err){console.log(err)});
+    this.peer.on('error', function(err){
+      console.log(err);
+    });
     this.peer.on('disconnected', function(){
       that.peer.reconnect();
     });

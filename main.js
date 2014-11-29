@@ -26,28 +26,29 @@ function main(window){
 		res.render("index");
 	});
 
-  var fileDowloadV4 = require('fileDownloadV4/downloaderV4.js');
-  var fileUploadV4 = require('fileDownloadV4/uploaderV4.js');
   var my_uid = 'zuoyao';
   // var my_uid = 'lizhihua';
 
 	io.sockets.on('connection', function(socket) {
     global.socket = socket;
     socket.emit("initpeer", my_uid);  // create Peer for download/upload
+    var fileDowloadV4 = require('./fileDownloadV4/downloaderV4.js');
+    var fileUploadV4 = require('./fileDownloadV4/uploaderV4.js');
+    fileUploadV4.initWindow(window);
+    fileDowloadV4.initWindow(window);
+    if (my_uid === 'lizhihua') {
+      var uploader_uids = 'zuoyao';
+      var fileInfo = {hash: 473225162, size: 11156847, file_to_save: 'Advice.mp3'};
+      fileDowloadV4.downloadFile(fileInfo, my_uid, uploader_uids);
+    }
+    if (my_uid === 'zuoyao') {
+      var downloader_uid = 'lizhihua';
+      var filesize = fs.statSync('Advice.mp3').size;  // 实际中接收传来的size和hash
+      var hash = 473225162;
+      fileUploadV4.initV4Upload(my_uid, downloader_uid, hash, filesize);
+    }
   });
-  fileUploadV4.initWindow(window);
-  fileDowloadV4.initWindow(window);
-  if (my_uid === 'lizhihua') {
-    var uploader_uids = 'zuoyao';
-    var fileInfo = {hash: 473225162, size: 11156847, file_to_save: 'Advice.mp3'};
-    fileDowloadV4.downloadFile(fileInfo, my_uid, uploader_uids);
-  }
-  if (my_uid === 'zuoyao') {
-    var downloader_uid = 'lizhihua';
-    var filesize = fs.statSync('Advice.mp3').size;  // 实际中接收传来的size和hash
-    var hash = 473225162;
-    fileUploadV4.initV4Upload(my_uid, downloader_uid, hash, filesize);
-  }
+
 }
 
 exports.main = main;

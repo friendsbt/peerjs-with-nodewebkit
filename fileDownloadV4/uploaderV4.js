@@ -1,8 +1,8 @@
 // NODE
 var fs = require('fs');
 var raf = require('random-access-file');
-var settings = require('settings');
-var utils = require('utils');
+var settings = require('./settings');
+var utils = require('./utils');
 var BLOCK_SIZE = settings.BLOCK_SIZE;
 
 var browserWindow;
