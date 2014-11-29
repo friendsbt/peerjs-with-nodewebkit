@@ -118,6 +118,7 @@ var PeerWrapper = {
         label: fileInfo.hash.toString(),  // data connection ID
         metadata: {count: 0}              // for reliablity test
       });
+      // TODO: uploader 多次尝试连接
       if (!that.uploadConnections[fileInfo.hash]) {
         that.uploadConnections[fileInfo.hash] = {};
       }
