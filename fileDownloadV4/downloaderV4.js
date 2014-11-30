@@ -23,6 +23,7 @@ var downloaders = {};  // node 环境中保存所有downloader
 
 global.socket.on('receive', function(dataDOM2Node){
   // TODO: update downloader states using global.downloaders[info.hash]
+  browserWindow.console.log("Received content length in Node: ", dataDOM2Node.content.length);
   downloaders[dataDOM2Node.hash]['descriptor'].write(
     dataDOM2Node.index * BLOCK_SIZE,
     dataDOM2Node.content,

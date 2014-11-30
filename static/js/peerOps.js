@@ -36,6 +36,8 @@ var PeerWrapper = {
           if (dataPeer2Peer.test) {
             console.log("got test package from ", conn.peer);
             conn.metadata.count++;
+            console.log("type of content: ", typeof(dataPeer2Peer.content));
+            console.log("data length: ", dataPeer2Peer.content.byteLength);
           } else {
             window.socket.emit('receive', {
               hash: conn.label,
@@ -46,7 +48,7 @@ var PeerWrapper = {
             if (dataPeer2Peer.rangeLastBlock) { // ready for next downloading next part
               conn.metadata.complete = true;
               e.emitEvent('part-complete-' + conn.label, conn.peer);
-              console.log("part complete: ", conn.downloadingPartIndex);
+              console.log("part complete: ", conn.metadata.downloadingPartIndex);
             }
           }
         });
@@ -130,7 +132,7 @@ var PeerWrapper = {
       var peerConnConfig = {
           reliable: true,
           label: fileInfo.hash.toString(),  // data connection ID
-          metadata: {count: 0}              // for reliablity test
+          metadata: {count: 0, downloadingPartIndex: 0, complete: true}
       };
       conn = that.peer.connect(downloader_uid, peerConnConfig);
       conn.on('open', function(){
