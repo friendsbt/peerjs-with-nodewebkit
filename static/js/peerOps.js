@@ -69,10 +69,11 @@ var PeerWrapper = {
         conn = that.downloadConnections[hash][uploader];
         conn.metadata.complete = false;
         that.rangeInfo.start = BLOCK_IN_PART * parts_left.shift();
-        that.rangeInfo.end = that.rangeInfo.start + BLOCK_IN_PART;
+        that.rangeInfo.end = that.rangeInfo.start + BLOCK_IN_PART - 1;
         conn.metadata.downloadingPartIndex = that.rangeInfo.start;
         that.rangeInfo.test = false;
         conn.send(that.rangeInfo);
+        console.log("download part ", that.rangeInfo.start, "from", conn.peer);
       }
     });
     setTimeout(function(){
@@ -81,7 +82,7 @@ var PeerWrapper = {
       for (var uploader_uid in that.downloadConnections[hash]) {
         if (that.downloadConnections[hash].hasOwnProperty(uploader_uid)) {
           that.rangeInfo.start = 0;
-          that.rangeInfo.end = 10;
+          that.rangeInfo.end = 9;
           that.rangeInfo.test = true;
           that.downloadConnections[hash][uploader_uid].send(that.rangeInfo);
           console.log("test rangeInfo sent to ", uploader_uid);
@@ -97,10 +98,11 @@ var PeerWrapper = {
               if (parts_left.length > 0) {
                 conn.metadata.complete = false;   // set status
                 that.rangeInfo.start = BLOCK_IN_PART * parts_left.shift();
-                that.rangeInfo.end = that.rangeInfo.start + BLOCK_IN_PART;
+                that.rangeInfo.end = that.rangeInfo.start + BLOCK_IN_PART - 1;
                 conn.metadata.downloadingPartIndex = that.rangeInfo.start;
                 that.rangeInfo.test = false;  // real data package, not testing package
                 conn.send(that.rangeInfo);
+                console.log("download part ", that.rangeInfo.start, "from", conn.peer);
               }
             } else {
               unreliableUploaders.push(uploader_uid);
