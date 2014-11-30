@@ -67,7 +67,7 @@ global.socket.on('send_data_blocks', function(msg) {
         index++;
       });
     }
-  }, 20);
+  }, 100);
 });
 
 /* TODO: 之后要把upload_main里的逻辑移入initV4Upload

@@ -109,10 +109,11 @@ var PeerWrapper = {
           }
         }
         unreliableUploaders.forEach(function(unreliableUploader){
+          console.log("closing unreliable connection: ", unreliableUploader);
           delete that.downloadConnections[hash][unreliableUploader];
         });
-      }, 1000);
-    }, 15000);  // for test: 15s, set to 5s when used in production
+      }, 5000);
+    }, 10000);  // for test: 15s, set to 5s when used in production
   },
   upload: function(my_uid, downloader_uid, fileInfo, try_count){
     var that = this;
@@ -167,7 +168,7 @@ var PeerWrapper = {
       throw PeerDisconnectedServerError("peer no longer connected to peerServer");
     }
     setTimeout(function(){  // try 3 times if connection failed
-      if (try_count < 3 && !connected) {
+      if (try_count < MAX_TRY && !connected) {
         conn.close();
         that.upload(my_uid, downloader_uid, fileInfo, try_count+1);
       }
