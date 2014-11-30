@@ -37,11 +37,16 @@ var PeerWrapper = {
             console.log("got test package from ", conn.peer);
             conn.metadata.count++;
           } else {
-            window.socket.emit('receive', {data: dataPeer2Peer.content, index: dataPeer2Peer.index});
+            window.socket.emit('receive', {
+              hash: conn.label,
+              data: dataPeer2Peer.content,
+              index: dataPeer2Peer.index
+            });
             console.log("got data", Date());
             if (dataPeer2Peer.rangeLastBlock) { // ready for next downloading next part
               conn.metadata.complete = true;
               e.emitEvent('part-complete-' + conn.label, conn.peer);
+              console.log("part complete: ", conn.downloadingPartIndex);
             }
           }
         });

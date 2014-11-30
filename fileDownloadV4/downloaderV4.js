@@ -12,6 +12,7 @@ var DOWNLOAD_OVER = settings.DownloadState['DOWNLOAD_OVER'],
     DOWNLOAD_ERR = settings.DownloadState['DOWNLOAD_ERR'],
     ALREADY_COMPLETE = settings.DownloadState['ALREADY_COMPLETE'];
 
+var BLOCK_SIZE = settings.BLOCK_SIZE;
 
 var browserWindow;
 exports.initWindow = function(window) {
