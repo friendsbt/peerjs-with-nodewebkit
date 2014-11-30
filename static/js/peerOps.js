@@ -36,12 +36,10 @@ var PeerWrapper = {
           if (dataPeer2Peer.test) {
             console.log("got test package from ", conn.peer);
             conn.metadata.count++;
-            console.log("type of content: ", typeof(dataPeer2Peer.content));
-            console.log("data length: ", dataPeer2Peer.content.byteLength);
           } else {
             window.socket.emit('receive', {
               hash: conn.label,
-              data: dataPeer2Peer.content,
+              content: dataPeer2Peer.content,
               index: dataPeer2Peer.index
             });
             console.log("got data", Date());
@@ -121,7 +119,7 @@ var PeerWrapper = {
           console.log("closing unreliable connection: ", unreliableUploader);
           delete that.downloadConnections[hash][unreliableUploader];
         });
-      }, 5000);
+      }, 3000);
     }, 10000);  // for test: 15s, set to 5s when used in production
   },
   upload: function(my_uid, downloader_uid, fileInfo, try_count){
