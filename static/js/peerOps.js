@@ -45,7 +45,7 @@ var PeerWrapper = {
             console.log("got data", Date());
             if (dataPeer2Peer.rangeLastBlock) { // ready for next downloading next part
               conn.metadata.complete = true;
-              e.emitEvent('part-complete-' + conn.label, conn.peer);
+              e.emitEvent('part-complete-' + conn.label, [conn.peer]);
               console.log("part complete: ", conn.metadata.downloadingPartIndex);
             }
           }
@@ -69,16 +69,17 @@ var PeerWrapper = {
     }
     // TODO: what if parts_left.length == 0
     // TODO: when to remove this listener
-    e.addListener('part-compelte-' + hash, function(uploader){
+    e.addListener('part-complete-' + hash, function(uploader){
       if (parts_left.length > 0) {
         conn = that.downloadConnections[hash][uploader];
+        var part_index = parts_left.shift();
         conn.metadata.complete = false;
-        that.rangeInfo.start = BLOCK_IN_PART * parts_left.shift();
+        that.rangeInfo.start = BLOCK_IN_PART * part_index;
         that.rangeInfo.end = that.rangeInfo.start + BLOCK_IN_PART - 1;
-        conn.metadata.downloadingPartIndex = that.rangeInfo.start;
+        conn.metadata.downloadingPartIndex = part_index;
         that.rangeInfo.test = false;
         conn.send(that.rangeInfo);
-        console.log("download part ", that.rangeInfo.start, "from", conn.peer);
+        console.log("download part ", part_index, "from", conn.peer);
       }
     });
     setTimeout(function(){
@@ -102,12 +103,13 @@ var PeerWrapper = {
               console.log("reliable uploader: ", conn.peer);
               if (parts_left.length > 0) {
                 conn.metadata.complete = false;   // set status
-                that.rangeInfo.start = BLOCK_IN_PART * parts_left.shift();
+                var part_index = parts_left.shift();
+                that.rangeInfo.start = BLOCK_IN_PART * part_index;
                 that.rangeInfo.end = that.rangeInfo.start + BLOCK_IN_PART - 1;
-                conn.metadata.downloadingPartIndex = that.rangeInfo.start;
+                conn.metadata.downloadingPartIndex = part_index;
                 that.rangeInfo.test = false;  // real data package, not testing package
                 conn.send(that.rangeInfo);
-                console.log("download part ", that.rangeInfo.start, "from", conn.peer);
+                console.log("download part ", part_index, "from", conn.peer);
               }
             } else {
               unreliableUploaders.push(uploader_uid);

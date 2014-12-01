@@ -32,7 +32,7 @@ global.socket.on('receive', function(dataDOM2Node){
       }
       // TODO: 何时接收完成
       if (dataDOM2Node.content.length < BLOCK_SIZE) {
-        window.console.log("receive complete, ", Date);
+        browserWindow.console.log("receive complete, ", Date);
         downloaders[dataDOM2Node.hash]['descriptor'].close();
         var hash = parseInt(xxhash(0).update(fs.readFileSync('Advice.mp3')).digest());
         if (hash === 473225162) {
