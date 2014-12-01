@@ -28,7 +28,7 @@ global.socket.on('receive', function(dataDOM2Node){
     dataDOM2Node.content,
     function(err) {
       if (err) {
-        window.console.log(err);
+        browserWindow.console.log(err);
       }
       if (downloaders[dataDOM2Node.hash]['blocks_left'] === 0) {
         browserWindow.console.log("receive complete, ", Date);

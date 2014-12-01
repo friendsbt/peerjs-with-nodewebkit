@@ -206,3 +206,5 @@ var PeerWrapper = {
       .send(this.dataPeer2Peer);
   }
 };
+
+// TODO: 现在关闭进程时有可能 peer-server 检测不到下线

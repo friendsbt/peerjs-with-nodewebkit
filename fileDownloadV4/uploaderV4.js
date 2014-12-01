@@ -11,7 +11,7 @@ exports.initWindow = function(window) {
 };
 
 exports.initV4Upload = function(my_uid, downloader_uid, hash, filesize){
-  var totalFullBlocks = parseInt((filesize - BLOCK_SIZE + 1) / BLOCK_SIZE);
+  var totalFullBlocks = parseInt(filesize / BLOCK_SIZE);
   var realLastBlockSize = filesize - BLOCK_SIZE * totalFullBlocks;
   browserWindow.console.log('totalblock:' + totalFullBlocks.toString());
   browserWindow.console.log('lastblocksize:' + realLastBlockSize.toString());
@@ -67,7 +67,7 @@ global.socket.on('send_data_blocks', function(msg) {
         index++;
       });
     }
-  }, 50);
+  }, 20);
 });
 
 /* TODO: 之后要把upload_main里的逻辑移入initV4Upload
