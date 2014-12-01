@@ -42,7 +42,6 @@ var PeerWrapper = {
               content: dataPeer2Peer.content,
               index: dataPeer2Peer.index
             });
-            console.log("got data", Date());
             if (dataPeer2Peer.rangeLastBlock) { // ready for next downloading next part
               conn.metadata.complete = true;
               e.emitEvent('part-complete-' + conn.label, [conn.peer]);
@@ -68,7 +67,6 @@ var PeerWrapper = {
       parts_left.push(i);
     }
     // TODO: what if parts_left.length == 0
-    // TODO: when to remove this listener
     e.addListener('part-complete-' + hash, function(uploader){
       if (parts_left.length > 0) {
         conn = that.downloadConnections[hash][uploader];
@@ -80,6 +78,9 @@ var PeerWrapper = {
         that.rangeInfo.test = false;
         conn.send(that.rangeInfo);
         console.log("download part ", part_index, "from", conn.peer);
+      } else {
+        console.log("listener removed");
+        return true;  // remove listener
       }
     });
     setTimeout(function(){
@@ -195,13 +196,12 @@ var PeerWrapper = {
     if (dataNode2DOM.rangeLastBlock) {
       this.dataPeer2Peer.rangeLastBlock = true;
       console.log('last block of this part ', Date());
+      console.log("buffersize: ",
+        PeerWrapper.uploadConnections[dataNode2DOM.hash][dataNode2DOM.downloader].bufferSize);
     } else if (this.dataPeer2Peer.rangeLastBlock) {
       delete this.dataPeer2Peer.rangeLastBlock;
     }
     PeerWrapper.uploadConnections[dataNode2DOM.hash][dataNode2DOM.downloader]
       .send(this.dataPeer2Peer);
-    console.log("buffersize: ",
-      PeerWrapper.uploadConnections[dataNode2DOM.hash][dataNode2DOM.downloader].bufferSize);
-    console.log('block ', dataNode2DOM.index, "sent: ", Date());
   }
 };
