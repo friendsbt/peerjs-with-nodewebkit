@@ -23,7 +23,6 @@ var PeerWrapper = {
       console.log("connect to server");
     });
     this.peer.on('connection', function(conn) {
-      // TODO: 确保上传端主动发起连接时不会引发这个事件
       console.log("Got connection from uploader: " + conn.peer);
       if (!that.downloadConnections[conn.label]) {
         that.downloadConnections[conn.label] = {};
@@ -44,6 +43,7 @@ var PeerWrapper = {
             });
             if (dataPeer2Peer.rangeLastBlock) { // ready for next downloading next part
               conn.metadata.complete = true;
+              window.socket.emit("part-complete", conn.label);
               e.emitEvent('part-complete-' + conn.label, [conn.peer]);
               console.log("part complete: ", conn.metadata.downloadingPartIndex);
             }
@@ -119,6 +119,7 @@ var PeerWrapper = {
           }
         }
         unreliableUploaders.forEach(function(unreliableUploader){
+          // TODO: if no reliable connection found, use forwarding
           console.log("closing unreliable connection: ", unreliableUploader);
           delete that.downloadConnections[hash][unreliableUploader];
         });

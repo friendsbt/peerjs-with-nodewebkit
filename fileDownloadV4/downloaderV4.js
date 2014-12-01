@@ -22,7 +22,7 @@ exports.initWindow = function(window) {
 var downloaders = {};  // node 环境中保存所有downloader
 
 global.socket.on('receive', function(dataDOM2Node){
-  // TODO: update downloader states using global.downloaders[info.hash]
+  downloaders[dataDOM2Node.hash]['blocks_left']--;
   downloaders[dataDOM2Node.hash]['descriptor'].write(
     dataDOM2Node.index * BLOCK_SIZE,
     dataDOM2Node.content,
@@ -30,8 +30,7 @@ global.socket.on('receive', function(dataDOM2Node){
       if (err) {
         window.console.log(err);
       }
-      // TODO: 何时接收完成
-      if (dataDOM2Node.content.length < BLOCK_SIZE) {
+      if (downloaders[dataDOM2Node.hash]['blocks_left'] === 0) {
         browserWindow.console.log("receive complete, ", Date);
         downloaders[dataDOM2Node.hash]['descriptor'].close();
         var hash = parseInt(xxhash(0).update(fs.readFileSync('Advice.mp3')).digest());
@@ -43,6 +42,12 @@ global.socket.on('receive', function(dataDOM2Node){
       }
     }
   );
+});
+
+global.socket.on("part-complete", function(hash){
+  // TODO: 到底是在v4Downloader内部记录进度还是在全局的downloaders[hash]中记录?
+  // 可能张洋那边是需要在内部记录的. 如果是这样, 要把blocks_left 和 complete_parts_count 挪进v4Downloader
+  downloaders[hash]['complete_parts_count']++;
 });
 
 function v4Downloader(fileInfo, my_uid, uploader_uids, e,
@@ -110,6 +115,9 @@ exports.downloadFile = function(fileInfo, my_uid, uploader_uids,
   downloaders[fileInfo.hash]['v4Downloader'] = d;
   downloaders[fileInfo.hash]['path'] = fileInfo.file_to_save;
   downloaders[fileInfo.hash]['descriptor'] = raf(fileInfo.file_to_save);
+  downloaders[fileInfo.hash]['blocks_left'] =
+    parseInt((fileInfo.size + BLOCK_SIZE - 1) / BLOCK_SIZE);
+  downloaders[fileInfo.hash]['complete_parts_count'] = 0;
   d.startFileDownload();
 };
 
