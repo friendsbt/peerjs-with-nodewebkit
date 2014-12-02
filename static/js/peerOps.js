@@ -3,18 +3,22 @@
 var BLOCK_SIZE = 1024;
 var BLOCK_IN_PART = 1024;
 var MAX_TRY = 3;
+var peerConfig = {host: '182.92.191.93', port: 9000, debug: 3};
 var e = new EventEmitter();
 
 var PeerWrapper = {
   rangeInfo: {start: 0, end: 0, test: true},  // these two objects will be reused
   dataPeer2Peer: {content: null, index: 0},
   initPeer: function(my_uid) {  // must be called first in main.js
-    this.peer = new Peer(my_uid, {host: '182.92.191.93', port: 9000, debug: 3});
+    this.peer = new Peer(my_uid, peerConfig);
     var that = this;
     this.uploadConnections = {};  // 保存用于上传的conn信息
     this.downloadConnections = {}; // 保存用于下载的conn信息
     this.peer.on('error', function(err){
       console.log(err);
+      if (err.type === "unavailable-id") {
+        that.peer = new Peer(my_uid + Date.now(), peerConfig);
+      }
     });
     this.peer.on('disconnected', function(){
       that.peer.reconnect();
