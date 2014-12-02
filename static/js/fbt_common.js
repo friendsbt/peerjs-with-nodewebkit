@@ -32,3 +32,4 @@ function updateProgressBarMessage(hash, msg) {
   });
 }
 */
+

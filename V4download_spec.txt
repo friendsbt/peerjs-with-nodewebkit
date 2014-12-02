@@ -55,6 +55,7 @@ dataNode2DOM: Node环境给DOM环境的数据包, 用于上传
 
 dataPeer2Peer: 上传端发给下载端的数据包, 上传下载通用
     content: 实际数据, BLOCK_SIZE
+    checksum: crc32校验和
     index: block index
     [test]: true    如果有这个域, 表明是测试可靠性的数据包
     [rangeLastBlock]: true     有这个域, 说明part 下载完成, 因为Peerjs 能确保包得到达顺序

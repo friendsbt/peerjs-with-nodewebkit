@@ -8,7 +8,7 @@ var e = new EventEmitter();
 
 var PeerWrapper = {
   rangeInfo: {start: 0, end: 0, test: true},  // these two objects will be reused
-  dataPeer2Peer: {content: null, index: 0},
+  dataPeer2Peer: {content: null, checksum: 0, index: 0},
   initPeer: function(my_uid) {  // must be called first in main.js
     this.peer = new Peer(my_uid, peerConfig);
     var that = this;
@@ -40,16 +40,26 @@ var PeerWrapper = {
             console.log("got test package from ", conn.peer);
             conn.metadata.count++;
           } else {
-            window.socket.emit('receive', {
-              hash: conn.label,
-              content: dataPeer2Peer.content,
-              index: dataPeer2Peer.index
-            });
-            if (dataPeer2Peer.rangeLastBlock) { // ready for next downloading next part
-              conn.metadata.complete = true;
-              window.socket.emit("part-complete", conn.label);
-              e.emitEvent('part-complete-' + conn.label, [conn.peer]);
-              console.log("part complete: ", conn.metadata.downloadingPartIndex);
+            var checksum = CRC32.buf(dataPeer2Peer.content);
+            if (dataPeer2Peer.checksum === checksum) {
+              console.log("checksum1: ", dataPeer2Peer.checksum, "checksum2: ", checksum);
+              window.socket.emit('receive', {
+                hash: conn.label,
+                content: dataPeer2Peer.content,
+                index: dataPeer2Peer.index
+              });
+              if (dataPeer2Peer.rangeLastBlock) { // ready for next downloading next part
+                conn.metadata.complete = true;
+                console.log("part complete: ", conn.metadata.downloadingPartIndex);
+                window.socket.emit("part-complete", conn.label);
+                e.emitEvent('part-complete-' + conn.label, [conn.peer]);
+              }
+            } else {  // redownload block whose checksum does not match
+              that.rangeInfo.start = dataPeer2Peer.index;
+              that.rangeInfo.end = dataPeer2Peer.index;
+              that.rangeInfo.test = false;
+              conn.send(that.rangeInfo);
+              console.log("redownload block: ", dataPeer2Peer.index, "from", conn.peer);
             }
           }
         });
@@ -191,6 +201,7 @@ var PeerWrapper = {
   },
   sendBlock: function(dataNode2DOM){
     this.dataPeer2Peer.content = dataNode2DOM.content;
+    this.dataPeer2Peer.checksum = CRC32.buf(dataNode2DOM.content);
     this.dataPeer2Peer.index = dataNode2DOM.index;
     // set or remove test/rangeLastBlock attribute
     if (dataNode2DOM.test) {
