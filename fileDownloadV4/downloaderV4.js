@@ -1,4 +1,4 @@
-// Node
+var fs = require('fs');
 var raf = require('random-access-file');
 var xxhash = require('xxhashjs');
 var forwardDownloader = require('./forward').forwardDownloader;
@@ -31,7 +31,7 @@ global.socket.on('receive', function(dataDOM2Node){
         browserWindow.console.log(err);
       }
       if (downloaders[dataDOM2Node.hash]['blocks_left'] === 0) {
-        browserWindow.console.log("receive complete, ", Date);
+        browserWindow.console.log("receive complete, ", Date());
         downloaders[dataDOM2Node.hash]['descriptor'].close();
         var hash = parseInt(xxhash(0).update(fs.readFileSync('Advice.mp3')).digest());
         if (hash === 473225162) {
