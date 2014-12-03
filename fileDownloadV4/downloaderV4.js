@@ -2,7 +2,7 @@ var fs = require('fs');
 var path = require('path');
 var raf = require('random-access-file');
 var xxhash = require('xxhashjs');
-var crc32 = require('crc32');
+var crc32 = require('crc-32');
 var beq = require('buffer-equal');
 var forwardDownloader = require('./forward').forwardDownloader;
 var peerjsDownloader = require('./peerDownloader').peerjsDownloader;
@@ -35,8 +35,8 @@ function bufferCompare(dataDOM2Node) {
 global.socket.on('receive', function(dataDOM2Node){
   downloaders[dataDOM2Node.hash]['blocks_left']--;
   if (!bufferCompare(dataDOM2Node)){  // buffer check
-    console.log("block ", dataDOM2Node.index, "not equal!!");
-    console.log("bf1: ", crc32.buf(bf1), "bf2: ", crc32.buf(dataDOM2Node.content));
+    browserWindow.console.log("block ", dataDOM2Node.index, "not equal!!");
+    browserWindow.console.log("bf1: ", crc32.buf(bf1), "bf2: ", crc32.buf(dataDOM2Node.content));
   }
   downloaders[dataDOM2Node.hash]['descriptor'].write(
     dataDOM2Node.index * BLOCK_SIZE,
