@@ -1,6 +1,9 @@
 var fs = require('fs');
+var path = require('path');
 var raf = require('random-access-file');
 var xxhash = require('xxhashjs');
+var crc32 = require('crc32');
+var beq = require('buffer-equal');
 var forwardDownloader = require('./forward').forwardDownloader;
 var peerjsDownloader = require('./peerDownloader').peerjsDownloader;
 var settings = require('./settings');
@@ -21,8 +24,20 @@ exports.initWindow = function(window) {
 
 var downloaders = {};  // node 环境中保存所有downloader
 
+var f1 = fs.openSync(path.join(path.dirname(__dirname), 'Advice_std.mp3'), 'r');
+var bf1 = Buffer(1024);
+
+function bufferCompare(dataDOM2Node) {
+  fs.readSync(f1, bf1, 0, 1024, dataDOM2Node.index * 1024);
+  return beq(dataDOM2Node.content, bf1);
+}
+
 global.socket.on('receive', function(dataDOM2Node){
   downloaders[dataDOM2Node.hash]['blocks_left']--;
+  if (!bufferCompare(dataDOM2Node)){  // buffer check
+    console.log("block ", dataDOM2Node.index, "not equal!!");
+    console.log("bf1: ", crc32.buf(bf1), "bf2: ", crc32.buf(dataDOM2Node.content));
+  }
   downloaders[dataDOM2Node.hash]['descriptor'].write(
     dataDOM2Node.index * BLOCK_SIZE,
     dataDOM2Node.content,
