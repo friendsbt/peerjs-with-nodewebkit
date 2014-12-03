@@ -40,9 +40,8 @@ var PeerWrapper = {
             console.log("got test package from ", conn.peer);
             conn.metadata.count++;
           } else {
-            var checksum = CRC32.buf(dataPeer2Peer.content);
+            var checksum = CRC32.buf(new Uint8Array(dataPeer2Peer.content));
             if (dataPeer2Peer.checksum === checksum) {
-              console.log("checksum1: ", dataPeer2Peer.checksum, "checksum2: ", checksum);
               window.socket.emit('receive', {
                 hash: conn.label,
                 content: dataPeer2Peer.content,
@@ -55,6 +54,7 @@ var PeerWrapper = {
                 e.emitEvent('part-complete-' + conn.label, [conn.peer]);
               }
             } else {  // redownload block whose checksum does not match
+              console.log("checksum1: ", dataPeer2Peer.checksum, "checksum2: ", checksum);
               that.rangeInfo.start = dataPeer2Peer.index;
               that.rangeInfo.end = dataPeer2Peer.index;
               that.rangeInfo.test = false;
@@ -124,7 +124,7 @@ var PeerWrapper = {
                 conn.metadata.downloadingPartIndex = part_index;
                 that.rangeInfo.test = false;  // real data package, not testing package
                 conn.send(that.rangeInfo);
-                console.log("download part ", part_index, "from", conn.peer);
+                console.log("download part", part_index, "from", conn.peer);
               }
             } else {
               unreliableUploaders.push(uploader_uid);
@@ -164,6 +164,9 @@ var PeerWrapper = {
             console.log('block range format wrong!');
             conn.close();
           } else {
+            if (rangeInfo.start === rangeInfo.end) {
+              console.log("got redownload rangeInfo");
+            }
             var lastBlockSize = BLOCK_SIZE;
             if (rangeInfo.end >= fileInfo.totalFullBlocks) {
               // end 永远是1024倍数, 有可能大于totalFullBlocks, 此时需要替换成真实值
@@ -201,7 +204,7 @@ var PeerWrapper = {
   },
   sendBlock: function(dataNode2DOM){
     this.dataPeer2Peer.content = dataNode2DOM.content;
-    this.dataPeer2Peer.checksum = CRC32.buf(dataNode2DOM.content);
+    this.dataPeer2Peer.checksum = CRC32.buf(new Uint8Array(dataNode2DOM.content));
     this.dataPeer2Peer.index = dataNode2DOM.index;
     // set or remove test/rangeLastBlock attribute
     if (dataNode2DOM.test) {
