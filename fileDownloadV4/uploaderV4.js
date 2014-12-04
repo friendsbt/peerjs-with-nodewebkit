@@ -45,9 +45,12 @@ global.socket.on('send_data_blocks', function(msg) {
           hash: msg.hash,
           index: index,
           downloader: msg.downloader,
-          test: msg.test,
-          rangeLastBlock: true
+          test: msg.test
         };
+        // 如果start=end, 说明是单独的重传请求, 这时rangeLastBlock 应该为false
+        // 否则下载端接到这个块之后会认为一个part传完了, 但其实只是重传, 该part-complete消息
+        // 应该之前就emit过了
+        dataNode2DOM.rangeLastBlock = (msg.start !== msg.end);
         global.socket.emit('send_block', dataNode2DOM);
         file.close();
         // 上传端不断开连接, 下载端确认hash之后断开所有连接

@@ -40,27 +40,17 @@ var PeerWrapper = {
             console.log("got test package from ", conn.peer);
             conn.metadata.count++;
           } else {
-            var checksum = CRC32.buf(new Uint8Array(dataPeer2Peer.content));
-            if (dataPeer2Peer.checksum === checksum) {
-              window.socket.emit('receive', {
-                hash: conn.label,
-                content: dataPeer2Peer.content,
-                index: dataPeer2Peer.index,
-                checksum: dataPeer2Peer.checksum
-              });
-              if (dataPeer2Peer.rangeLastBlock) { // ready for next downloading next part
-                conn.metadata.complete = true;
-                console.log("part complete: ", conn.metadata.downloadingPartIndex);
-                window.socket.emit("part-complete", conn.label);
-                e.emitEvent('part-complete-' + conn.label, [conn.peer]);
-              }
-            } else {  // redownload block whose checksum does not match
-              console.log("checksum1: ", dataPeer2Peer.checksum, "checksum2: ", checksum);
-              that.rangeInfo.start = dataPeer2Peer.index;
-              that.rangeInfo.end = dataPeer2Peer.index;
-              that.rangeInfo.test = false;
-              conn.send(that.rangeInfo);
-              console.log("redownload block: ", dataPeer2Peer.index, "from", conn.peer);
+            window.socket.emit('receive', {
+              hash: conn.label,
+              content: dataPeer2Peer.content,
+              index: dataPeer2Peer.index,
+              checksum: dataPeer2Peer.checksum
+            });
+            if (dataPeer2Peer.rangeLastBlock) { // ready for next downloading next part
+              conn.metadata.complete = true;
+              console.log("part complete: ", conn.metadata.downloadingPartIndex);
+              window.socket.emit("part-complete", conn.label);
+              e.emitEvent('part-complete-' + conn.label, [conn.peer]);
             }
           }
         });
@@ -73,6 +63,16 @@ var PeerWrapper = {
         });
       });
     });
+  },
+  downloadBlock: function(redownloadMessage){
+    // 这个方法只在块重传时使用
+    for (var arbitraryUploader in this.uploadConnections[redownloadMessage.hash])
+      break;
+    this.rangeInfo.start = redownloadMessage.index;
+    this.rangeInfo.end = redownloadMessage.index;
+    this.rangeInfo.test = false;
+    this.uploadConnections[redownloadMessage.hash][arbitraryUploader].send(this.rangeInfo);
+    console.log("redownload block: ", redownloadMessage.index, "from ", arbitraryUploader);
   },
   download: function(hash, totalparts) {
     var that = this;

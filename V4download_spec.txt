@@ -70,7 +70,13 @@ dataDOM2Node: DOM环境给Node环境的数据包, 用于下载
     content: 实际数据, BLOCK_SIZE
     index: block index
     test: true/false
+    checksum: cotent的crc32校验和
 
+redownloadMessage: 下载端使用, 当Node 环境块校验失败后, 从Node 环境发给DOM 环境要求重传的消息
+    hash: 文件hash
+    index: block index
+  注: 因为Node 环境不知道这个block 是哪个uploader 传过来的, 也不需要知道
+      之后只要随便找一个uploader让它重新把这个块发过来即可
 
 2. 下载控制
 确定了可靠 uploader 之后, 由 downloader 控制整个下载流程

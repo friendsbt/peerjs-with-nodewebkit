@@ -18,6 +18,9 @@ window.socket.on('download', function(downloadFileInfo){
   PeerWrapper.download(downloadFileInfo.hash, downloadFileInfo.totalparts);
 });
 
+window.socket.on('downloadBlock', function(redownloadMessage){
+  PeerWrapper.downloadBlock(redownloadMessage);
+});
 
 /* 移植到FBT时才能够使用
 function updateProgressBarMessage(hash, msg) {
