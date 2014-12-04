@@ -36,7 +36,11 @@ global.socket.on('receive', function(dataDOM2Node){
   downloaders[dataDOM2Node.hash]['blocks_left']--;
   if (!bufferCompare(dataDOM2Node)){  // buffer check
     browserWindow.console.log("block ", dataDOM2Node.index, "not equal!!");
-    browserWindow.console.log("bf1: ", crc32.buf(bf1), "bf2: ", crc32.buf(dataDOM2Node.content));
+    browserWindow.console.log(
+      "bf1: ", crc32.buf(bf1),
+      "bf2: ", crc32.buf(dataDOM2Node.content),
+      "checksum in data package: ", dataDOM2Node.checksum
+    );
   }
   downloaders[dataDOM2Node.hash]['descriptor'].write(
     dataDOM2Node.index * BLOCK_SIZE,

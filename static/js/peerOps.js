@@ -45,7 +45,8 @@ var PeerWrapper = {
               window.socket.emit('receive', {
                 hash: conn.label,
                 content: dataPeer2Peer.content,
-                index: dataPeer2Peer.index
+                index: dataPeer2Peer.index,
+                checksum: dataPeer2Peer.checksum
               });
               if (dataPeer2Peer.rangeLastBlock) { // ready for next downloading next part
                 conn.metadata.complete = true;
