@@ -66,6 +66,7 @@ var PeerWrapper = {
   },
   downloadBlock: function(redownloadMessage){
     // 这个方法只在块重传时使用
+    console.log("redownload block: ", redownloadMessage.index);
     for (var arbitraryUploader in this.uploadConnections[redownloadMessage.hash])
       break;
     this.rangeInfo.start = redownloadMessage.index;

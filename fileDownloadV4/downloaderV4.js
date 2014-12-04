@@ -28,6 +28,7 @@ var bf1 = Buffer(1024);
 
 global.socket.on('receive', function(dataDOM2Node){
   if (crc32.buf(dataDOM2Node.content) !== dataDOM2Node.checksum) {
+    browserWindow.console.log(dataDOM2Node.index, "not equal");
     global.socket.emit("downloadBlock", {index: dataDOM2Node.index, hash: dataDOM2Node.hash});
     return;
   }

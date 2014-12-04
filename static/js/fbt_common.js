@@ -19,6 +19,7 @@ window.socket.on('download', function(downloadFileInfo){
 });
 
 window.socket.on('downloadBlock', function(redownloadMessage){
+  console.log("fbt_common, redownload block: ", redownloadMessage.index);
   PeerWrapper.downloadBlock(redownloadMessage);
 });
 
