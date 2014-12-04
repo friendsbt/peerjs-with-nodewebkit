@@ -23,8 +23,6 @@ exports.initWindow = function(window) {
 
 var downloaders = {};  // node 环境中保存所有downloader
 
-var f1 = fs.openSync(path.join(path.dirname(__dirname), 'Advice_std.mp3'), 'r');
-var bf1 = Buffer(1024);
 
 global.socket.on('receive', function(dataDOM2Node){
   if (crc32.buf(dataDOM2Node.content) !== dataDOM2Node.checksum) {
