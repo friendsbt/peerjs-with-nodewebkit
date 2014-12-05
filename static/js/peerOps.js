@@ -28,9 +28,6 @@ var PeerWrapper = {
     });
     this.peer.on('connection', function(conn) {
       console.log("Got connection from uploader: " + conn.peer);  // Fire for downloader
-      if (!that.downloadConnections[conn.label]) {
-        that.downloadConnections[conn.label] = {};
-      }
       conn.on('open', function() {
         console.log("connected to downloader: " + conn.peer);
         that.downloadConnections[conn.label][conn.peer] = conn;
@@ -82,6 +79,9 @@ var PeerWrapper = {
     for (var i = 0; i < totalparts; i++) {
       parts_left.push(i);
     }
+    if (!this.downloadConnections[hash]) {
+      that.downloadConnections[hash] = {};
+    }
     e.addListener('part-complete-' + hash, function(uploader){
       if (parts_left.length > 0) {
         conn = that.downloadConnections[hash][uploader];
@@ -100,8 +100,6 @@ var PeerWrapper = {
     });
     setTimeout(function(){
       // 下载端发送可靠性测试rangeInfo
-      // TODO: set refuse more connection field
-      that.uploadConnections[hash].rejectConn = true;
       for (var uploader_uid in that.downloadConnections[hash]) {
         if (that.downloadConnections[hash].hasOwnProperty(uploader_uid)) {
           that.rangeInfo.start = 0;

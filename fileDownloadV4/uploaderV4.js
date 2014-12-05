@@ -42,10 +42,14 @@ global.socket.on('send_data_blocks', function(msg) {
   var index = msg.start;
   var dataNode2DOM;
   var intervalObj = setInterval(function() {
-    /*
+
     if (index >= msg.end) {
       clearInterval(intervalObj);
       file.read(index * BLOCK_SIZE, msg.lastBlockSize, function(err, data) {
+        if (err) {
+          browserWindow.console.log("read index ", index, "error");
+          browserWindow.console.log(err);
+        }
         dataNode2DOM = {
           content: utils.toArrayBuffer(data),
           hash: msg.hash,
@@ -63,6 +67,10 @@ global.socket.on('send_data_blocks', function(msg) {
       });
     } else {
       file.read(index * BLOCK_SIZE, BLOCK_SIZE, function(err, data) {
+        if (err) {
+          browserWindow.console.log("read index ", index, "error");
+          browserWindow.console.log(err);
+        }
         dataNode2DOM = {
           content: utils.toArrayBuffer(data),
           hash: msg.hash,
@@ -76,7 +84,8 @@ global.socket.on('send_data_blocks', function(msg) {
         index++;
       });
     }
-    */
+
+    /*
     if (index >= msg.end) {
       clearInterval(intervalObj);
       var bf2 = Buffer(msg.lastBlockSize);
@@ -109,6 +118,7 @@ global.socket.on('send_data_blocks', function(msg) {
         msg.start += BLOCK_SIZE;
         index++;
     }
+    */
   }, 20);
 });
 

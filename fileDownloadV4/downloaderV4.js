@@ -44,8 +44,9 @@ global.socket.on('receive', function(dataDOM2Node){
         var hash = parseInt(xxhash(0).update(fs.readFileSync('Advice.mp3')).digest());
         if (hash === 473225162) {
           browserWindow.console.log("hash equal");
+          browserWindow.console.log(downloaders);  // see what's inside
           browserWindow.console.log("download complete: ",
-            path.basename(downloaders[dataDOM2Node.hash][path]));
+            path.basename(downloaders[dataDOM2Node.hash]['path']));
           global.socket.emit("complete", dataDOM2Node.hash);
         } else {
           browserWindow.console.log("hash not equal");
