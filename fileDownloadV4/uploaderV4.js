@@ -42,7 +42,7 @@ global.socket.on('send_data_blocks', function(msg) {
   var index = msg.start;
   var dataNode2DOM;
   var intervalObj = setInterval(function() {
-
+    /*
     if (index >= msg.end) {
       clearInterval(intervalObj);
       file.read(index * BLOCK_SIZE, msg.lastBlockSize, function(err, data) {
@@ -84,8 +84,7 @@ global.socket.on('send_data_blocks', function(msg) {
         index++;
       });
     }
-
-    /*
+    */
     if (index >= msg.end) {
       clearInterval(intervalObj);
       var bf2 = Buffer(msg.lastBlockSize);
@@ -118,7 +117,6 @@ global.socket.on('send_data_blocks', function(msg) {
         msg.start += BLOCK_SIZE;
         index++;
     }
-    */
   }, 20);
 });
 

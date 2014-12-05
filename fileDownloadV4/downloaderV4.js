@@ -25,32 +25,18 @@ var downloaders = {};  // node 环境中保存所有downloader
 
 
 global.socket.on('receive', function(dataDOM2Node){
+  var hash = dataDOM2Node.hash;
   if (crc32.buf(dataDOM2Node.content) !== dataDOM2Node.checksum) {
     browserWindow.console.log(dataDOM2Node.index, "not equal");
-    global.socket.emit("downloadBlock", {index: dataDOM2Node.index, hash: dataDOM2Node.hash});
+    global.socket.emit("downloadBlock", {index: dataDOM2Node.index, hash: hash});
     return;
   }
-  downloaders[dataDOM2Node.hash]['blocks_left']--;
-  downloaders[dataDOM2Node.hash]['descriptor'].write(
+  downloaders[hash]['descriptor'].write(
     dataDOM2Node.index * BLOCK_SIZE,
     dataDOM2Node.content,
     function(err) {
       if (err) {
         browserWindow.console.log(err);
-      }
-      if (downloaders[dataDOM2Node.hash]['blocks_left'] === 0) {
-        browserWindow.console.log("receive complete, ", Date());
-        downloaders[dataDOM2Node.hash]['descriptor'].close();
-        var hash = parseInt(xxhash(0).update(fs.readFileSync('Advice.mp3')).digest());
-        if (hash === 473225162) {
-          browserWindow.console.log("hash equal");
-          browserWindow.console.log(downloaders);  // see what's inside
-          browserWindow.console.log("download complete: ",
-            path.basename(downloaders[dataDOM2Node.hash]['path']));
-          global.socket.emit("complete", dataDOM2Node.hash);
-        } else {
-          browserWindow.console.log("hash not equal");
-        }
       }
     }
   );
@@ -59,7 +45,20 @@ global.socket.on('receive', function(dataDOM2Node){
 global.socket.on("part-complete", function(hash){
   // TODO: 到底是在v4Downloader内部记录进度还是在全局的downloaders[hash]中记录?
   // 可能张洋那边是需要在内部记录的. 如果是这样, 要把blocks_left 和 complete_parts_count 挪进v4Downloader
-  downloaders[hash]['complete_parts_count']++;
+  downloaders[hash]['complete_parts']++;
+  if (downloaders[hash]['complete_parts'] === downloaders[hash]['total_parts']) {
+    browserWindow.console.log("receive complete, ", Date());
+    downloaders[hash]['descriptor'].close();
+    if (parseInt(xxhash(0).update(fs.readFileSync('Advice.mp3')).digest()) === 473225162) {
+      browserWindow.console.log("hash equal");
+      browserWindow.console.log(downloaders);  // see what's inside
+      browserWindow.console.log("download complete: ",
+        path.basename(downloaders[hash]['path']));
+      global.socket.emit("complete", hash);
+    } else {
+      browserWindow.console.log("hash not equal");
+    }
+  }
 });
 
 function v4Downloader(fileInfo, my_uid, uploader_uids, e,
@@ -127,9 +126,9 @@ exports.downloadFile = function(fileInfo, my_uid, uploader_uids,
   downloaders[fileInfo.hash]['v4Downloader'] = d;
   downloaders[fileInfo.hash]['path'] = fileInfo.file_to_save;
   downloaders[fileInfo.hash]['descriptor'] = raf(fileInfo.file_to_save);
-  downloaders[fileInfo.hash]['blocks_left'] =
-    parseInt((fileInfo.size + BLOCK_SIZE - 1) / BLOCK_SIZE);
-  downloaders[fileInfo.hash]['complete_parts_count'] = 0;
+  downloaders[fileInfo.hash]['complete_parts'] = 0;
+  downloaders[fileInfo.hash]['total_parts'] =
+    parseInt((fileInfo.size + settings.partsize - 1) / settings.partsize);
   d.startFileDownload();
 };
 

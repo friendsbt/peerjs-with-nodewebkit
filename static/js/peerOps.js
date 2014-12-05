@@ -14,6 +14,7 @@ var PeerWrapper = {
     var that = this;
     this.uploadConnections = {};  // 保存用于上传的conn信息
     this.downloadConnections = {}; // 保存用于下载的conn信息
+    this.parts_left = {}; // 记录每个文件的下载情况, key是hash, value是剩余part的Array
     this.peer.on('error', function(err){
       console.log(err);
       if (err.type === "unavailable-id") {
@@ -37,18 +38,18 @@ var PeerWrapper = {
             console.log("got test package from ", conn.peer);
             conn.metadata.count++;
           } else {
-            window.socket.emit('receive', {
-              hash: conn.label,
-              content: dataPeer2Peer.content,
-              index: dataPeer2Peer.index,
-              checksum: dataPeer2Peer.checksum
-            });
             if (dataPeer2Peer.rangeLastBlock) { // ready for downloading next part
               conn.metadata.complete = true;
               console.log("part complete: ", conn.metadata.downloadingPartIndex);
               window.socket.emit("part-complete", conn.label);
               e.emitEvent('part-complete-' + conn.label, [conn.peer]);
             }
+            window.socket.emit('receive', {
+              hash: conn.label,
+              content: dataPeer2Peer.content,
+              index: dataPeer2Peer.index,
+              checksum: dataPeer2Peer.checksum
+            });
           }
         });
         conn.on('error', function(err) {
@@ -57,6 +58,10 @@ var PeerWrapper = {
         // downloader's handler of dataConn's close event
         conn.on('close', function() {
           console.log('Connection to ' + conn.peer + ' has been closed.');
+          if (!conn.metadata.complete) {  // 如果断掉的conn处于下载状态, 它正在下的part要重新下
+            that.parts_left[conn.label].push(conn.metadata.downloadingPartIndex);
+            console.log("readding part ", conn.metadata.downloadingPartIndex, "to parts_left");
+          }
         });
       });
     });
@@ -75,17 +80,17 @@ var PeerWrapper = {
   download: function(hash, totalparts) {
     var that = this;
     var conn;
-    var parts_left = [];
+    this.parts_left[hash] = [];
     for (var i = 0; i < totalparts; i++) {
-      parts_left.push(i);
+      this.parts_left[hash].push(i);
     }
     if (!this.downloadConnections[hash]) {
       that.downloadConnections[hash] = {};
     }
     e.addListener('part-complete-' + hash, function(uploader){
-      if (parts_left.length > 0) {
+      if (that.parts_left[hash].length > 0) {
         conn = that.downloadConnections[hash][uploader];
-        var part_index = parts_left.shift();
+        var part_index = that.parts_left[hash].shift();
         conn.metadata.complete = false;
         that.rangeInfo.start = BLOCK_IN_PART * part_index;
         that.rangeInfo.end = that.rangeInfo.start + BLOCK_IN_PART - 1;
@@ -116,9 +121,9 @@ var PeerWrapper = {
             conn = that.downloadConnections[hash][uploader_uid];
             if (conn.metadata.count === 10) {
               console.log("reliable uploader: ", conn.peer);
-              if (parts_left.length > 0) {
+              if (that.parts_left[hash].length > 0) {
                 conn.metadata.complete = false;   // set status
-                var part_index = parts_left.shift();
+                var part_index = that.parts_left[hash].shift();
                 that.rangeInfo.start = BLOCK_IN_PART * part_index;
                 that.rangeInfo.end = that.rangeInfo.start + BLOCK_IN_PART - 1;
                 conn.metadata.downloadingPartIndex = part_index;
