@@ -23,6 +23,10 @@ window.socket.on('downloadBlock', function(redownloadMessage){
   PeerWrapper.downloadBlock(redownloadMessage);
 });
 
+window.socket.on('complete', function(hash){
+  PeerWrapper.clear(hash);
+});
+
 /* 移植到FBT时才能够使用
 function updateProgressBarMessage(hash, msg) {
   var FLAG = ['m', 'p', 'f'];

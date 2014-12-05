@@ -1,7 +1,4 @@
 var fs = require('fs');
-var xxhash = require('xxhashjs');
-
-var BLOCK_SIZE = 1024;
 
 process.on("uncaughtException", function(err){
   fs.appendFileSync('err.txt', err);

@@ -11,7 +11,7 @@ exports.initWindow = function(window) {
   browserWindow = window;
 };
 
-// TODO: FIXME
+// FIXME
 var f1 = fs.openSync(path.join(path.dirname(__dirname), 'Advice.mp3'), 'r');
 var bf1 = Buffer(1024);
 

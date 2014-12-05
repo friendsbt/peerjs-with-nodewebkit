@@ -27,7 +27,7 @@ var PeerWrapper = {
       console.log("connect to server");
     });
     this.peer.on('connection', function(conn) {
-      console.log("Got connection from uploader: " + conn.peer);
+      console.log("Got connection from uploader: " + conn.peer);  // Fire for downloader
       if (!that.downloadConnections[conn.label]) {
         that.downloadConnections[conn.label] = {};
       }
@@ -46,7 +46,7 @@ var PeerWrapper = {
               index: dataPeer2Peer.index,
               checksum: dataPeer2Peer.checksum
             });
-            if (dataPeer2Peer.rangeLastBlock) { // ready for next downloading next part
+            if (dataPeer2Peer.rangeLastBlock) { // ready for downloading next part
               conn.metadata.complete = true;
               console.log("part complete: ", conn.metadata.downloadingPartIndex);
               window.socket.emit("part-complete", conn.label);
@@ -57,9 +57,9 @@ var PeerWrapper = {
         conn.on('error', function(err) {
           console.log(err);
         });
+        // downloader's handler of dataConn's close event
         conn.on('close', function() {
-          console.log('uploader ' + conn.peer + ' has closed data connection');
-          delete that.downloadConnections[conn.label][conn.peer];
+          console.log('Connection to ' + conn.peer + ' has been closed.');
         });
       });
     });
@@ -82,7 +82,6 @@ var PeerWrapper = {
     for (var i = 0; i < totalparts; i++) {
       parts_left.push(i);
     }
-    // TODO: what if parts_left.length == 0
     e.addListener('part-complete-' + hash, function(uploader){
       if (parts_left.length > 0) {
         conn = that.downloadConnections[hash][uploader];
@@ -95,13 +94,14 @@ var PeerWrapper = {
         conn.send(that.rangeInfo);
         console.log("download part ", part_index, "from", conn.peer);
       } else {
-        console.log("listener removed");
+        console.log("part-complete listener removed");
         return true;  // remove listener
       }
     });
     setTimeout(function(){
       // 下载端发送可靠性测试rangeInfo
       // TODO: set refuse more connection field
+      that.uploadConnections[hash].rejectConn = true;
       for (var uploader_uid in that.downloadConnections[hash]) {
         if (that.downloadConnections[hash].hasOwnProperty(uploader_uid)) {
           that.rangeInfo.start = 0;
@@ -186,9 +186,11 @@ var PeerWrapper = {
             });
           }
         });
-        conn.on('close', function(){  // 只处理对方conn.close事件, 不管重连时的close
-          console.log('downloader ' + conn.peer + ' has closed data connection');
+        // uploader's handler of dataConn's close event
+        conn.on('close', function(){
+          console.log('Connection to ' + conn.peer + ' has been closed.');
           delete that.uploadConnections[fileInfo.hash][conn.peer];
+          // MUSTN'T delete uploadConnections[hash], cause maybe uploading to others
         });
       });
       conn.on('error', function(err){
@@ -224,6 +226,15 @@ var PeerWrapper = {
     }
     PeerWrapper.uploadConnections[dataNode2DOM.hash][dataNode2DOM.downloader]
       .send(this.dataPeer2Peer);
+  },
+  clear: function(hash) { // clear resources after file download complete, downloader call this
+    for (var uid in this.downloadConnections[hash]) {
+      if (this.downloadConnections[hash].hasOwnProperty(uid)){
+        this.downloadConnections[hash][uid].close();
+        delete this.downloadConnections[hash][uid];
+      }
+    }
+    delete this.downloadConnections[hash];
   }
 };
 
