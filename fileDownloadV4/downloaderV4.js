@@ -48,16 +48,18 @@ global.socket.on("part-complete", function(hash){
   downloaders[hash]['complete_parts']++;
   if (downloaders[hash]['complete_parts'] === downloaders[hash]['total_parts']) {
     browserWindow.console.log("receive complete, ", Date());
-    downloaders[hash]['descriptor'].close();
-    if (parseInt(xxhash(0).update(fs.readFileSync('Advice.mp3')).digest()) === 473225162) {
-      browserWindow.console.log("hash equal");
-      browserWindow.console.log(downloaders);  // see what's inside
-      browserWindow.console.log("download complete: ",
-        path.basename(downloaders[hash]['path']));
-      global.socket.emit("complete", hash);
-    } else {
-      browserWindow.console.log("hash not equal");
-    }
+    setTimeout(function(){  // 最后一个block可能还没有写入, 必须延迟一点关闭文件
+      downloaders[hash]['descriptor'].close();
+      if (parseInt(xxhash(0).update(fs.readFileSync('Advice.mp3')).digest()) === 473225162) {
+        browserWindow.console.log("hash equal");
+        browserWindow.console.log(downloaders);  // see what's inside
+        browserWindow.console.log("download complete: ",
+          path.basename(downloaders[hash]['path']));
+        global.socket.emit("complete", hash);
+      } else {
+        browserWindow.console.log("hash not equal");
+      }
+    }, 1000);
   }
 });
 
