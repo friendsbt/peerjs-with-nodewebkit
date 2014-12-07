@@ -89,7 +89,7 @@ var PeerWrapper = {
         conn.on('close', function() {
           console.log('Connection to ' + conn.peer + ' has been closed.');
           if (!conn.metadata.complete) {  // 如果断掉的conn处于下载状态, 它正在下的part要重新下
-            that.parts_left[hash].push(conn.metadata.downloadingPartIndex);
+            that.parts_left[hash].unshift(conn.metadata.downloadingPartIndex);
             console.log("readding part ", conn.metadata.downloadingPartIndex, "to parts_left");
           }
           delete that.downloadConnections[hash][conn.peer];
