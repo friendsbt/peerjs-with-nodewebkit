@@ -1,7 +1,6 @@
 // NODE
 var fs = require('fs');
-var path = require('path');
-var raf = require('random-access-file');
+var spath = require('path');
 var settings = require('./settings');
 var utils = require('./utils');
 var BLOCK_SIZE = settings.BLOCK_SIZE;
@@ -11,8 +10,7 @@ exports.initWindow = function(window) {
   browserWindow = window;
 };
 
-// FIXME
-var f1 = fs.openSync(path.join(path.dirname(__dirname), 'Advice.mp3'), 'r');
+var fds = {};
 var bf1 = Buffer(settings.partsize);
 
 exports.initV4Upload = function(my_uid, downloader_uid, hash, filesize){
@@ -21,6 +19,8 @@ exports.initV4Upload = function(my_uid, downloader_uid, hash, filesize){
   browserWindow.console.log('totalblock:' + totalFullBlocks.toString());
   browserWindow.console.log('lastblocksize:' + realLastBlockSize.toString());
   var path = 'Advice.mp3';  // TODO: retrieve from db
+  fds[path] = fs.openSync(spath.join(spath.dirname(__dirname), 'Advice.mp3'), 'r');
+  // TODO: when to close? conn close end a msg here?
   global.socket.emit('connect_downloader', {
     'my_uid': my_uid,
     'downloader_uid': downloader_uid,
@@ -38,11 +38,11 @@ global.socket.on('send_data_blocks', function(msg) {
   last_block_size = BLOCK_SIZE, unless the last block of file will be sent here
   msg {path, start, end, lastBlockSize, downloader, hash, test}
    */
-  var file = raf(msg.path);  // TODO: record this file descriptor
+  var fd = fds[msg.path];
   var index = msg.start;
-  var bytesIndex = index * BLOCK_SIZE;
+  var bytesIndex = 0;   // slice start bytes index
   var dataNode2DOM;
-  file.read(index * BLOCK_SIZE, settings.partsize, function(err, data){
+  fs.read(fd, bf1, 0, settings.partsize, index*BLOCK_SIZE, function(err, bytesRead, data){
     if (err) {
       browserWindow.console.log("read index ", index, "error");
       console.log(err);
@@ -62,7 +62,6 @@ global.socket.on('send_data_blocks', function(msg) {
           // 应该之前就emit过了
           dataNode2DOM.rangeLastBlock = (msg.start !== msg.end);
           global.socket.emit('send_block', dataNode2DOM);
-          file.close();
         } else {
           dataNode2DOM = {
             content: utils.toArrayBuffer(data.slice(bytesIndex, bytesIndex + BLOCK_SIZE)),

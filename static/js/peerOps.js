@@ -22,12 +22,17 @@ var PeerWrapper = {
       }
     });
     this.peer.on('disconnected', function(){
-      that.peer.reconnect();
+      setTimeout(function(){
+        that.peer.reconnect();
+      }, 1000);
     });
     this.peer.on('open', function(){
       console.log("connect to server");
     });
     this.peer.on('connection', function(conn) {
+      if (!that.downloadConnections[conn.label]) {
+        that.downloadConnections[conn.label] = {};
+      }
       console.log("Got connection from uploader: " + conn.peer);  // Fire for downloader
       conn.on('open', function() {
         console.log("connected to downloader: " + conn.peer);
@@ -83,9 +88,6 @@ var PeerWrapper = {
     this.parts_left[hash] = [];
     for (var i = 0; i < totalparts; i++) {
       this.parts_left[hash].push(i);
-    }
-    if (!this.downloadConnections[hash]) {
-      that.downloadConnections[hash] = {};
     }
     e.addListener('part-complete-' + hash, function(uploader){
       if (that.parts_left[hash].length > 0) {
