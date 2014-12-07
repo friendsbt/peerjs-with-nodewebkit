@@ -35,9 +35,34 @@ var PeerWrapper = {
       }
       console.log("Got connection from uploader: " + conn.peer);  // Fire for downloader
       conn.on('open', function() {
+        var hash = conn.label;
         console.log("connected to downloader: " + conn.peer);
-        that.downloadConnections[conn.label][conn.peer] = conn;
+        that.downloadConnections[hash][conn.peer] = conn;
         conn.metadata.complete = true;
+        // 下载端发送可靠性测试rangeInfo
+        that.rangeInfo.start = 0;
+        that.rangeInfo.end = 9;
+        that.rangeInfo.test = true;
+        that.downloadConnections[hash][conn.peer].send(that.rangeInfo);
+        console.log("test rangeInfo sent to ", conn.peer);
+        // 等待3s, 确定可靠连接, 分配初始下载任务
+        setTimeout(function() {
+          if (conn.metadata.count === 10) {
+            console.log("reliable uploader: ", conn.peer);
+            if (that.parts_left[hash].length > 0) {
+              conn.metadata.complete = false;   // set status
+              var part_index = that.parts_left[hash].shift();
+              that.rangeInfo.start = BLOCK_IN_PART * part_index;
+              that.rangeInfo.end = that.rangeInfo.start + BLOCK_IN_PART - 1;
+              conn.metadata.downloadingPartIndex = part_index;
+              that.rangeInfo.test = false;  // real data package, not testing package
+              conn.send(that.rangeInfo);
+              console.log("download part", part_index, "from", conn.peer);
+            }
+          } else {
+            conn.close(); // notify uploader
+          }
+        }, 3000);
         conn.on('data', function(dataPeer2Peer) {
           if (dataPeer2Peer.test) {
             console.log("got test package from ", conn.peer);
@@ -46,11 +71,11 @@ var PeerWrapper = {
             if (dataPeer2Peer.rangeLastBlock) { // ready for downloading next part
               conn.metadata.complete = true;
               console.log("part complete: ", conn.metadata.downloadingPartIndex);
-              window.socket.emit("part-complete", conn.label);
-              e.emitEvent('part-complete-' + conn.label, [conn.peer]);
+              window.socket.emit("part-complete", hash);
+              e.emitEvent('part-complete-' + hash, [conn.peer]);
             }
             window.socket.emit('receive', {
-              hash: conn.label,
+              hash: hash,
               content: dataPeer2Peer.content,
               index: dataPeer2Peer.index,
               checksum: dataPeer2Peer.checksum
@@ -64,9 +89,10 @@ var PeerWrapper = {
         conn.on('close', function() {
           console.log('Connection to ' + conn.peer + ' has been closed.');
           if (!conn.metadata.complete) {  // 如果断掉的conn处于下载状态, 它正在下的part要重新下
-            that.parts_left[conn.label].push(conn.metadata.downloadingPartIndex);
+            that.parts_left[hash].push(conn.metadata.downloadingPartIndex);
             console.log("readding part ", conn.metadata.downloadingPartIndex, "to parts_left");
           }
+          delete that.downloadConnections[hash][conn.peer];
         });
       });
     });
@@ -105,47 +131,6 @@ var PeerWrapper = {
         return true;  // remove listener
       }
     });
-    setTimeout(function(){
-      // 下载端发送可靠性测试rangeInfo
-      for (var uploader_uid in that.downloadConnections[hash]) {
-        if (that.downloadConnections[hash].hasOwnProperty(uploader_uid)) {
-          that.rangeInfo.start = 0;
-          that.rangeInfo.end = 9;
-          that.rangeInfo.test = true;
-          that.downloadConnections[hash][uploader_uid].send(that.rangeInfo);
-          console.log("test rangeInfo sent to ", uploader_uid);
-        }
-      }
-      setTimeout(function() { // 等待1s, 确定可靠连接, 分配初始下载任务
-        var unreliableUploaders = [];
-        for (var uploader_uid in that.downloadConnections[hash]) {
-          if (that.downloadConnections[hash].hasOwnProperty(uploader_uid)) {
-            conn = that.downloadConnections[hash][uploader_uid];
-            if (conn.metadata.count === 10) {
-              console.log("reliable uploader: ", conn.peer);
-              if (that.parts_left[hash].length > 0) {
-                conn.metadata.complete = false;   // set status
-                var part_index = that.parts_left[hash].shift();
-                that.rangeInfo.start = BLOCK_IN_PART * part_index;
-                that.rangeInfo.end = that.rangeInfo.start + BLOCK_IN_PART - 1;
-                conn.metadata.downloadingPartIndex = part_index;
-                that.rangeInfo.test = false;  // real data package, not testing package
-                conn.send(that.rangeInfo);
-                console.log("download part", part_index, "from", conn.peer);
-              }
-            } else {
-              unreliableUploaders.push(uploader_uid);
-              conn.close(); // notify uploader
-            }
-          }
-        }
-        unreliableUploaders.forEach(function(unreliableUploader){
-          // TODO: if no reliable connection found, use forwarding
-          console.log("closing unreliable connection: ", unreliableUploader);
-          delete that.downloadConnections[hash][unreliableUploader];
-        });
-      }, 3000);
-    }, 10000);  // for test: 15s, set to 5s when used in production
   },
   upload: function(my_uid, downloader_uid, fileInfo, try_count){
     var that = this;
