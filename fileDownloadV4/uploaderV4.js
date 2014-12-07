@@ -13,7 +13,7 @@ exports.initWindow = function(window) {
 
 // FIXME
 var f1 = fs.openSync(path.join(path.dirname(__dirname), 'Advice.mp3'), 'r');
-var bf1 = Buffer(1024);
+var bf1 = Buffer(settings.partsize);
 
 exports.initV4Upload = function(my_uid, downloader_uid, hash, filesize){
   var totalFullBlocks = parseInt(filesize / BLOCK_SIZE);
@@ -40,84 +40,45 @@ global.socket.on('send_data_blocks', function(msg) {
    */
   var file = raf(msg.path);  // TODO: record this file descriptor
   var index = msg.start;
+  var bytesIndex = index * BLOCK_SIZE;
   var dataNode2DOM;
-  var intervalObj = setInterval(function() {
-    /*
-    if (index >= msg.end) {
-      clearInterval(intervalObj);
-      file.read(index * BLOCK_SIZE, msg.lastBlockSize, function(err, data) {
-        if (err) {
-          browserWindow.console.log("read index ", index, "error");
-          browserWindow.console.log(err);
-        }
-        dataNode2DOM = {
-          content: utils.toArrayBuffer(data),
-          hash: msg.hash,
-          index: index,
-          downloader: msg.downloader,
-          test: msg.test
-        };
-        // 如果start=end, 说明是单独的重传请求, 这时rangeLastBlock 应该为false
-        // 否则下载端接到这个块之后会认为一个part传完了, 但其实只是重传, 该part-complete消息
-        // 应该之前就emit过了
-        dataNode2DOM.rangeLastBlock = (msg.start !== msg.end);
-        global.socket.emit('send_block', dataNode2DOM);
-        file.close();
-        // 上传端不断开连接, 下载端确认hash之后断开所有连接
-      });
+  file.read(index * BLOCK_SIZE, settings.partsize, function(err, data){
+    if (err) {
+      browserWindow.console.log("read index ", index, "error");
+      console.log(err);
     } else {
-      file.read(index * BLOCK_SIZE, BLOCK_SIZE, function(err, data) {
-        if (err) {
-          browserWindow.console.log("read index ", index, "error");
-          browserWindow.console.log(err);
+      var intervalObj = setInterval(function() {
+        if (index >= msg.end) {
+          clearInterval(intervalObj);
+          dataNode2DOM = {
+            content: utils.toArrayBuffer(data.slice(bytesIndex, bytesIndex + msg.lastBlockSize)),
+            hash: msg.hash,
+            index: index,
+            downloader: msg.downloader,
+            test: msg.test
+          };
+          // 如果start=end, 说明是单独的重传请求, 这时 rangeLastBlock 应该为false
+          // 否则下载端接到这个块之后会认为一个part传完了, 但其实只是重传, 该part-complete消息
+          // 应该之前就emit过了
+          dataNode2DOM.rangeLastBlock = (msg.start !== msg.end);
+          global.socket.emit('send_block', dataNode2DOM);
+          file.close();
+        } else {
+          dataNode2DOM = {
+            content: utils.toArrayBuffer(data.slice(bytesIndex, bytesIndex + BLOCK_SIZE)),
+            hash: msg.hash,
+            index: index,
+            downloader: msg.downloader,
+            test: msg.test,
+            rangeLastBlock: false
+          };
+          global.socket.emit('send_block', dataNode2DOM);
+          index++;
+          bytesIndex += BLOCK_SIZE;
         }
-        dataNode2DOM = {
-          content: utils.toArrayBuffer(data),
-          hash: msg.hash,
-          index: index,
-          downloader: msg.downloader,
-          test: msg.test,
-          rangeLastBlock: false
-        };
-        global.socket.emit('send_block', dataNode2DOM);
-        msg.start += BLOCK_SIZE;
-        index++;
-      });
+      }, 20);
     }
-    */
-    if (index >= msg.end) {
-      clearInterval(intervalObj);
-      var bf2 = Buffer(msg.lastBlockSize);
-      fs.readSync(f1, bf2, 0, msg.lastBlockSize, index * BLOCK_SIZE);
-        dataNode2DOM = {
-          content: utils.toArrayBuffer(bf2),
-          hash: msg.hash,
-          index: index,
-          downloader: msg.downloader,
-          test: msg.test
-        };
-        // 如果start=end, 说明是单独的重传请求, 这时rangeLastBlock 应该为false
-        // 否则下载端接到这个块之后会认为一个part传完了, 但其实只是重传, 该part-complete消息
-        // 应该之前就emit过了
-        dataNode2DOM.rangeLastBlock = (msg.start !== msg.end);
-        global.socket.emit('send_block', dataNode2DOM);
-        file.close();
-        // 上传端不断开连接, 下载端确认hash之后断开所有连接
-    } else {
-      fs.readSync(f1, bf1, 0, BLOCK_SIZE, index * BLOCK_SIZE);
-        dataNode2DOM = {
-          content: utils.toArrayBuffer(bf1),
-          hash: msg.hash,
-          index: index,
-          downloader: msg.downloader,
-          test: msg.test,
-          rangeLastBlock: false
-        };
-        global.socket.emit('send_block', dataNode2DOM);
-        msg.start += BLOCK_SIZE;
-        index++;
-    }
-  }, 20);
+  });
 });
 
 /* TODO: 之后要把upload_main里的逻辑移入initV4Upload
