@@ -63,6 +63,14 @@ global.socket.on("part-complete", function(hash){
   }
 });
 
+global.socket.on("uploader", function(info) { // 记录某个资源的上传者
+  if (downloaders[info.hash]['uploaders']) {
+    downloaders[info.hash]['uploaders'].push(info.uploader);
+  } else {
+    downloaders[info.hash]['uploaders'] = [];
+  }
+});
+
 function v4Downloader(fileInfo, my_uid, uploader_uids, e,
         downloadOverCallback, downloadProgressCallback) {
   this.innerDownloader = new peerjsDownloader(fileInfo);

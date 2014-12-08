@@ -37,12 +37,12 @@ var PeerWrapper = {
       console.log("connect to server");
     });
     this.peer.on('connection', function(conn) {
-      if (!that.downloadConnections[conn.label]) {
-        that.downloadConnections[conn.label] = {};
+      var hash = conn.label;
+      if (!that.downloadConnections[hash]) {
+        that.downloadConnections[hash] = {};
       }
       console.log("Got connection from uploader: " + conn.peer);  // Fire for downloader
       conn.on('open', function() {
-        var hash = conn.label;
         console.log("connected to downloader: " + conn.peer);
         that.downloadConnections[hash][conn.peer] = conn;
         conn.metadata.complete = true;
@@ -56,6 +56,7 @@ var PeerWrapper = {
         setTimeout(function() {
           if (conn.metadata.count === 10) {
             console.log("reliable uploader: ", conn.peer);
+            window.socket.emit("uploader", {hash: hash, uploader: conn.peer});
             if (that.parts_left[hash].length > 0) {
               conn.metadata.complete = false;   // set status
               var part_index = that.parts_left[hash].shift();
