@@ -3,12 +3,19 @@
 var BLOCK_SIZE = 1024;
 var BLOCK_IN_PART = 1024;
 var MAX_TRY = 3;
+var DOWNLOAD_OVER = 0;
+var DOWNLOADING = 1;
+var CANCELED = 2;
+var PAUSED = 3;
+var DOWNLOAD_ERR = 4;
+var ALREADY_COMPLETE = 5;
 var peerConfig = {host: '182.92.191.93', port: 9000, debug: 3};
 var e = new EventEmitter();
 
 var PeerWrapper = {
   rangeInfo: {start: 0, end: 0, test: true},  // these two objects will be reused
   dataPeer2Peer: {content: null, checksum: 0, index: 0},
+  downloadState: {},
   initPeer: function(my_uid) {  // must be called first in main.js
     this.peer = new Peer(my_uid, peerConfig);
     var that = this;
@@ -115,8 +122,9 @@ var PeerWrapper = {
     for (var i = 0; i < totalparts; i++) {
       this.parts_left[hash].push(i);
     }
+    this.downloadState[hash] = DOWNLOADING;
     e.addListener('part-complete-' + hash, function(uploader){
-      if (that.parts_left[hash].length > 0) {
+      if (that.downloadState[hash] === DOWNLOADING && that.parts_left[hash].length > 0){
         conn = that.downloadConnections[hash][uploader];
         var part_index = that.parts_left[hash].shift();
         conn.metadata.complete = false;
@@ -126,7 +134,7 @@ var PeerWrapper = {
         that.rangeInfo.test = false;
         conn.send(that.rangeInfo);
         console.log("download part ", part_index, "from", conn.peer);
-      } else {
+      } else if (that.parts_left[hash].length === 0) {
         console.log("part-complete listener removed");
         return true;  // remove listener
       }
@@ -217,7 +225,33 @@ var PeerWrapper = {
     PeerWrapper.uploadConnections[dataNode2DOM.hash][dataNode2DOM.downloader]
       .send(this.dataPeer2Peer);
   },
+  setDownloadState: function(hash, state) {
+    if (this.downloadState[hash]) {
+      switch (state) {
+        case DOWNLOADING:
+          if (this.downloadState[hash] === PAUSED) {
+            this.downloadState[hash] = DOWNLOADING;
+            // TODO: resume download
+          }
+          break;
+        case PAUSED:
+          if (this.downloadState[hash] === DOWNLOADING) {
+            this.downloadState[hash] = PAUSED;
+          }
+          break;
+        case CANCELED:
+          if (this.downloadState[hash] === DOWNLOADING || this.downloadState[hash] === PAUSED) {
+            this.downloadState[hash] = CANCELED;
+            // TODO: cancel download
+          }
+          break;
+      }
+    } else {
+      console.log(hash, 'does not exist in downloadState');
+    }
+  },
   clear: function(hash) { // clear resources after file download complete, downloader call this
+    console.assert(this.parts_left[hash].length, 0);
     for (var uid in this.downloadConnections[hash]) {
       if (this.downloadConnections[hash].hasOwnProperty(uid)){
         this.downloadConnections[hash][uid].close();
@@ -225,6 +259,8 @@ var PeerWrapper = {
       }
     }
     delete this.downloadConnections[hash];
+    delete this.downloadState[hash];
+    delete this.parts_left[hash];
   }
 };
 
