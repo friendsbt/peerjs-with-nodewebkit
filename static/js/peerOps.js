@@ -226,13 +226,21 @@ var PeerWrapper = {
     PeerWrapper.uploadConnections[dataNode2DOM.hash][dataNode2DOM.downloader]
       .send(this.dataPeer2Peer);
   },
-  setDownloadState: function(hash, state) {
+  setDownloadState: function(hash, state) {  // downloader call this
     if (this.downloadState[hash]) {
       switch (state) {
         case DOWNLOADING:
           if (this.downloadState[hash] === PAUSED) {
             this.downloadState[hash] = DOWNLOADING;
-            // TODO: resume download
+            var conn;
+            for (var uid in this.downloadConnections[hash]) {
+              if (this.downloadConnections[hash].hasOwnProperty(uid)){
+                conn = this.downloadConnections[hash][uid];
+                if (conn.metadata.complete) {
+                  e.emitEvent('part-complete-' + hash, [uid]);
+                }
+              }
+            }
           }
           break;
         case PAUSED:
@@ -243,7 +251,7 @@ var PeerWrapper = {
         case CANCELED:
           if (this.downloadState[hash] === DOWNLOADING || this.downloadState[hash] === PAUSED) {
             this.downloadState[hash] = CANCELED;
-            // TODO: cancel download
+            this.clear(hash);
           }
           break;
       }

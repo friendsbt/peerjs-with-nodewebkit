@@ -23,6 +23,10 @@ window.socket.on('downloadBlock', function(redownloadMessage){
   PeerWrapper.downloadBlock(redownloadMessage);
 });
 
+window.socket.on('setState', function(info){
+  PeerWrapper.setDownloadState(info.hash, info.state);
+});
+
 window.socket.on('complete', function(hash){
   PeerWrapper.clear(hash);
 });
