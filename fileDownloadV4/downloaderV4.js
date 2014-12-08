@@ -50,12 +50,19 @@ global.socket.on("part-complete", function(hash){
     browserWindow.console.log("receive complete, ", Date());
     setTimeout(function(){  // 最后一个block可能还没有写入, 必须延迟一点关闭文件
       downloaders[hash]['descriptor'].close();
-      if (parseInt(xxhash(0).update(fs.readFileSync('Advice.mp3')).digest()) === 473225162) {
+      if (parseInt(xxhash(0).update(fs.readFileSync(
+        downloaders[hash]['v4Downloader'].file_to_save_tmp)
+      ).digest()) === 473225162) {
         browserWindow.console.log("hash equal");
-        browserWindow.console.log(downloaders);  // see what's inside
-        browserWindow.console.log("download complete: ",
-          path.basename(downloaders[hash]['path']));
+        browserWindow.console.log("download complete: ",path.basename(downloaders[hash]['path']));
         global.socket.emit("complete", hash);
+        fs.rename(
+          downloaders[hash]['v4Downloader'].file_to_save_tmp,
+          downloaders[hash]['path'],
+          function(err) {
+            browserWindow.console.log(err);
+          }
+        );
       } else {
         browserWindow.console.log("hash not equal");
       }
@@ -74,8 +81,10 @@ global.socket.on("uploader", function(info) { // 记录某个资源的上传者
 function v4Downloader(fileInfo, my_uid, uploader_uids, e,
         downloadOverCallback, downloadProgressCallback) {
   this.innerDownloader = new peerjsDownloader(fileInfo);
-  this.fileInfo = fileInfo;
-  this.my_uid = my_uid;
+  this.hash = fileInfo.hash;
+  this.size = fileInfo.size;
+  this.file_to_save = fileInfo.file_to_save;
+  this.file_to_save_tmp = fileInfo.file_to_save + '.tmp';
   this.uploaderUidList = uploader_uids.split(',');
   this.e = e;
   this.downloadOverCallback = downloadOverCallback;
@@ -105,6 +114,10 @@ v4Downloader.prototype.resumeFileDownload = function() {
 v4Downloader.prototype.cancelFileDownload = function() {
   this.states.status = CANCELED;
   this.innerDownloader.cancelFileDownload(this.states);
+  if (fs.existsSync(this.file_to_save_tmp)) {
+    fs.unlinkSync(this.file_to_save_tmp);
+  }
+  // TODO: update nedb
 };
 
 v4Downloader.prototype.useForward = function() {
@@ -135,7 +148,7 @@ exports.downloadFile = function(fileInfo, my_uid, uploader_uids,
   downloaders[fileInfo.hash] = {};
   downloaders[fileInfo.hash]['v4Downloader'] = d;
   downloaders[fileInfo.hash]['path'] = fileInfo.file_to_save;
-  downloaders[fileInfo.hash]['descriptor'] = raf(fileInfo.file_to_save);
+  downloaders[fileInfo.hash]['descriptor'] = raf(d.file_to_save_tmp);
   downloaders[fileInfo.hash]['complete_parts'] = 0;
   downloaders[fileInfo.hash]['total_parts'] =
     parseInt((fileInfo.size + settings.partsize - 1) / settings.partsize);
