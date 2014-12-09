@@ -156,14 +156,14 @@ exports.downloadFile = function(fileInfo, my_uid, uploader_uids,
 };
 
 exports.pauseFileDownload = function(hash) {
-  downloaders[hash].pauseFileDownload();
+  downloaders[hash]['v4Downloader'].pauseFileDownload();
 };
 
 exports.resumeFileDownload = function(hash) {
-  downloaders[hash].resumeFileDownload();
+  downloaders[hash]['v4Downloader'].resumeFileDownload();
 };
 
 exports.cancelFileDownload = function(hash) {
-  downloaders[hash].cancelFileDownload();
-  delete downloaders[hash];
+  downloaders[hash]['v4Downloader'].cancelFileDownload();
+  // TODO: clear downloaders
 };
