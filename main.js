@@ -31,9 +31,13 @@ function main(window){
     socket.emit("initpeer", my_uid);  // create Peer for download/upload
     var fileDowloadV4 = require('./fileDownloadV4/downloaderV4.js');
     var fileUploadV4 = require('./fileDownloadV4/uploaderV4.js');
+
+    // init window object for debugging, remove this when moved into FBT
     fileUploadV4.initWindow(window);
     fileDowloadV4.initWindow(window);
-    var hash = 213160533;  // Advice.mp3
+    require('./fileDownloadV4/peerDownloader.js').initWindow(window);
+
+    var hash = 213160533;  // 臆病者.mp3
     var size = 3830868;
     if (my_uid === 'lizhihua') {
       var uploader_uids = 'zuoyao';

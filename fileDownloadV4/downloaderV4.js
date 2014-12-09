@@ -1,8 +1,9 @@
 var fs = require('fs');
-var path = require('path');
 var raf = require('random-access-file');
-var xxhash = require('xxhashjs');
-var crc32 = require('crc-32');
+
+var downloaders = {};  // node 环境中保存所有downloader
+global.downloaders = downloaders;
+
 var forwardDownloader = require('./forward').forwardDownloader;
 var peerjsDownloader = require('./peerDownloader').peerjsDownloader;
 var settings = require('./settings');
@@ -14,69 +15,10 @@ var DOWNLOAD_OVER = settings.DownloadState['DOWNLOAD_OVER'],
     DOWNLOAD_ERR = settings.DownloadState['DOWNLOAD_ERR'],
     ALREADY_COMPLETE = settings.DownloadState['ALREADY_COMPLETE'];
 
-var BLOCK_SIZE = settings.BLOCK_SIZE;
-
 var browserWindow;
 exports.initWindow = function(window) {
   browserWindow = window;
 };
-
-var downloaders = {};  // node 环境中保存所有downloader
-
-
-global.socket.on('receive', function(dataDOM2Node){
-  var hash = dataDOM2Node.hash;
-  if (crc32.buf(dataDOM2Node.content) !== dataDOM2Node.checksum) {
-    browserWindow.console.log(dataDOM2Node.index, "not equal");
-    global.socket.emit("downloadBlock", {index: dataDOM2Node.index, hash: hash});
-    return;
-  }
-  downloaders[hash]['descriptor'].write(
-    dataDOM2Node.index * BLOCK_SIZE,
-    dataDOM2Node.content,
-    function(err) {
-      if (err) {
-        browserWindow.console.log(err);
-      }
-    }
-  );
-});
-
-global.socket.on("part-complete", function(hash){
-  // TODO: 到底是在v4Downloader内部记录进度还是在全局的downloaders[hash]中记录?
-  // 可能张洋那边是需要在内部记录的. 如果是这样, 要把blocks_left 和 complete_parts_count 挪进v4Downloader
-  downloaders[hash]['complete_parts']++;
-  if (downloaders[hash]['complete_parts'] === downloaders[hash]['total_parts']) {
-    browserWindow.console.log("receive complete, ", Date());
-    setTimeout(function(){  // 最后一个block可能还没有写入, 必须延迟一点关闭文件
-      downloaders[hash]['descriptor'].close();
-      if (parseInt(xxhash(0).update(fs.readFileSync(
-        downloaders[hash]['v4Downloader'].file_to_save_tmp)
-      ).digest()) === 213160533) {
-        browserWindow.console.log("hash equal");
-        browserWindow.console.log("download complete: ",path.basename(downloaders[hash]['path']));
-        global.socket.emit("complete", hash);
-        fs.rename(
-          downloaders[hash]['v4Downloader'].file_to_save_tmp,
-          downloaders[hash]['path'],
-          function(err) {
-            browserWindow.console.log(err);
-          }
-        );
-      } else {
-        browserWindow.console.log("hash not equal");
-      }
-    }, 1000);
-  }
-});
-
-global.socket.on("uploader", function(info) { // 记录某个资源的上传者
-  if (downloaders[info.hash]['uploaders']) {
-    downloaders[info.hash]['uploaders'].push(info.uploader);
-  } else {
-    downloaders[info.hash]['uploaders'] = [];
-  }
-});
 
 function v4Downloader(fileInfo, my_uid, uploader_uids, e,
         downloadOverCallback, downloadProgressCallback) {
@@ -86,6 +28,9 @@ function v4Downloader(fileInfo, my_uid, uploader_uids, e,
   this.file_to_save = fileInfo.file_to_save;
   this.file_to_save_tmp = fileInfo.file_to_save + '.tmp';
   this.uploaderUidList = uploader_uids.split(',');
+  this.descriptor = raf(d.file_to_save_tmp);
+  this.complete_parts = 0;
+  this.total_parts = parseInt((fileInfo.size+settings.partsize-1)/settings.partsize);
   this.e = e;
   this.downloadOverCallback = downloadOverCallback;
   this.downloadProgressCallback = downloadProgressCallback;
@@ -145,25 +90,19 @@ exports.downloadFile = function(fileInfo, my_uid, uploader_uids,
     downloadOverCallback,
     downloadProgressCallback
   );
-  downloaders[fileInfo.hash] = {};
-  downloaders[fileInfo.hash]['v4Downloader'] = d;
-  downloaders[fileInfo.hash]['path'] = fileInfo.file_to_save;
-  downloaders[fileInfo.hash]['descriptor'] = raf(d.file_to_save_tmp);
-  downloaders[fileInfo.hash]['complete_parts'] = 0;
-  downloaders[fileInfo.hash]['total_parts'] =
-    parseInt((fileInfo.size + settings.partsize - 1) / settings.partsize);
+  downloaders[fileInfo.hash] = d;
   d.startFileDownload();
 };
 
 exports.pauseFileDownload = function(hash) {
-  downloaders[hash]['v4Downloader'].pauseFileDownload();
+  downloaders[hash].pauseFileDownload();
 };
 
 exports.resumeFileDownload = function(hash) {
-  downloaders[hash]['v4Downloader'].resumeFileDownload();
+  downloaders[hash].resumeFileDownload();
 };
 
 exports.cancelFileDownload = function(hash) {
-  downloaders[hash]['v4Downloader'].cancelFileDownload();
+  downloaders[hash].cancelFileDownload();
   // TODO: clear downloaders
 };
