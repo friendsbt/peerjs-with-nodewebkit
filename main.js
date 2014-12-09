@@ -33,11 +33,11 @@ function main(window){
     var fileUploadV4 = require('./fileDownloadV4/uploaderV4.js');
     fileUploadV4.initWindow(window);
     fileDowloadV4.initWindow(window);
-    var hash = 473225162;  // Advice.mp3
-    var size = 11156847;
+    var hash = 213160533;  // Advice.mp3
+    var size = 3830868;
     if (my_uid === 'lizhihua') {
       var uploader_uids = 'zuoyao';
-      var fileInfo = {hash: hash, size: size, file_to_save: 'Advice.mp3'};
+      var fileInfo = {hash: hash, size: size, file_to_save: '臆病者.mp3'};
       fileDowloadV4.downloadFile(fileInfo, my_uid, uploader_uids);
 
       // test pause and resume
@@ -46,12 +46,12 @@ function main(window){
         setTimeout(function(){
           fileDowloadV4.resumeFileDownload(hash);
         }, 5000);
-      }, 5000);
+      }, 30000);
     }
     if (my_uid === 'zuoyao') {
       var downloader_uid = 'lizhihua';
-      var filesize = fs.statSync('Advice.mp3').size;  // 实际中接收传来的size和hash
-      fileUploadV4.initV4Upload(my_uid, downloader_uid, hash, filesize);
+      // 实际中接收传来的size和hash
+      fileUploadV4.initV4Upload(my_uid, downloader_uid, hash, size);
     }
   });
 

@@ -52,7 +52,7 @@ global.socket.on("part-complete", function(hash){
       downloaders[hash]['descriptor'].close();
       if (parseInt(xxhash(0).update(fs.readFileSync(
         downloaders[hash]['v4Downloader'].file_to_save_tmp)
-      ).digest()) === 473225162) {
+      ).digest()) === 213160533) {
         browserWindow.console.log("hash equal");
         browserWindow.console.log("download complete: ",path.basename(downloaders[hash]['path']));
         global.socket.emit("complete", hash);

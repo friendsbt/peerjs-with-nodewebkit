@@ -18,9 +18,9 @@ exports.initV4Upload = function(my_uid, downloader_uid, hash, filesize){
   var realLastBlockSize = filesize - BLOCK_SIZE * totalFullBlocks;
   browserWindow.console.log('totalblock:' + totalFullBlocks.toString());
   browserWindow.console.log('lastblocksize:' + realLastBlockSize.toString());
-  var path = 'Advice.mp3';  // TODO: retrieve from db
-  fds[path] = fs.openSync(spath.join(spath.dirname(__dirname), 'Advice.mp3'), 'r');
-  // TODO: when to close? conn close end a msg here?
+  var path = '臆病者.mp3';  // TODO: retrieve from db
+  fds[path] = fs.openSync(spath.join(spath.dirname(__dirname), '臆病者.mp3'), 'r');
+  // TODO: when to close? conn close send a msg here?
   global.socket.emit('connect_downloader', {
     'my_uid': my_uid,
     'downloader_uid': downloader_uid,

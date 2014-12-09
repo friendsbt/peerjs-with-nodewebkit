@@ -203,7 +203,7 @@ var PeerWrapper = {
         conn.close();
         that.upload(my_uid, downloader_uid, fileInfo, try_count+1);
       }
-    }, 2000);
+    }, 4000);
   },
   sendBlock: function(dataNode2DOM){
     this.dataPeer2Peer.content = dataNode2DOM.content;
