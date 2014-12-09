@@ -13,6 +13,7 @@
         "socket.io": "1.x",
         "random-access-file": "0.3.1",
         "xxhashjs": "*",
-        "crc-32": "*"
+        "crc-32": "*",
+        "nedb": "*"
     }
 }
