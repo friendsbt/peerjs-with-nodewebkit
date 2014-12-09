@@ -230,6 +230,7 @@ var PeerWrapper = {
     if (this.downloadState[hash]) {
       switch (state) {
         case DOWNLOADING:
+          console.log("resume downloading ", hash);
           if (this.downloadState[hash] === PAUSED) {
             this.downloadState[hash] = DOWNLOADING;
             var conn;
@@ -244,11 +245,13 @@ var PeerWrapper = {
           }
           break;
         case PAUSED:
+          console.log("pause downloading ", hash);
           if (this.downloadState[hash] === DOWNLOADING) {
             this.downloadState[hash] = PAUSED;
           }
           break;
         case CANCELED:
+          console.log("cancel downloading ", hash);
           if (this.downloadState[hash] === DOWNLOADING || this.downloadState[hash] === PAUSED) {
             this.downloadState[hash] = CANCELED;
             this.clear(hash);
@@ -260,7 +263,7 @@ var PeerWrapper = {
     }
   },
   clear: function(hash) { // clear resources after file download complete, downloader call this
-    console.assert(this.parts_left[hash].length, 0);
+    console.assert(this.parts_left[hash].length === 0, "parts_left.length != 0");
     for (var uid in this.downloadConnections[hash]) {
       if (this.downloadConnections[hash].hasOwnProperty(uid)){
         this.downloadConnections[hash][uid].close();
