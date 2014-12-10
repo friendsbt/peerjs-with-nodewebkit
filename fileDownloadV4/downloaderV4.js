@@ -106,10 +106,12 @@ exports.downloadFile = function(fileInfo, my_uid, uploader_uids,
         if (fs.existsSync(d.file_to_save) || fs.existsSync(d.file_to_save_tmp)){
           if (parts_left.length === 0) {
             browserWindow.console.log("already complete");
+            d.complete_parts = d.total_parts;
             // TODO: call downloadOverCallback
           } else { //文件已存在,且没有下载完成,进入【断点续传】模式
             browserWindow.console.log("resume unfinished downloading");
             browserWindow.console.log("parts_left: ", parts_left);
+            d.complete_parts = d.total_parts - parts_left.length;
             d.startFileDownload(parts_left);
           }
         }
