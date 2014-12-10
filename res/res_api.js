@@ -50,7 +50,7 @@ function remove_record_from_parts_left(hash) {
     {'multi': true},
     function (err, numReplaced) {
       if (numReplaced === 0) {
-        global.log.info("no such record in parts_left");
+        browserWindow.console.log("no such record in parts_left");
       }
       global.parts_left_collection.findOne(
         {hash: parseInt(hash)},
@@ -82,5 +82,6 @@ function record_uploader(hash, uploader_id) {
 }
 
 exports.update_parts_left = update_parts_left;
+exports.remove_part_from_parts_left = remove_part_from_parts_left;
 exports.remove_record_from_parts_left = remove_record_from_parts_left;
 exports.record_uploader = record_uploader;
