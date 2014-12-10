@@ -97,6 +97,9 @@ exports.downloadFile = function(fileInfo, my_uid, uploader_uids,
   global.parts_left_collection.findOne(
     {hash: parseInt(hash)},
     function(err, doc) {
+      if (err) {
+        browserWindow.console.log(err);
+      }
       if (doc) {  // parts_left表中有对应项
         parts_left = doc.parts_left;
         // 检测文件是否已存在,如果已存在,并且没有剩余part,认为下载已完成

@@ -117,6 +117,7 @@ var PeerWrapper = {
     console.log("redownload block: ", redownloadMessage.index, "from ", arbitraryUploader);
   },
   download: function(hash, parts_left) {
+    console.log("parts_left:", parts_left);
     var that = this;
     var conn;
     this.parts_left[hash] = parts_left;
