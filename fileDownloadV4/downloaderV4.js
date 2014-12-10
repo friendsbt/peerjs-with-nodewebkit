@@ -1,6 +1,6 @@
 var fs = require('fs');
 var raf = require('random-access-file');
-var res_api = require('res/res_api');
+var res_api = require('../res/res_api');
 
 var downloaders = {};  // node 环境中保存所有downloader
 global.downloaders = downloaders;
@@ -29,7 +29,7 @@ function v4Downloader(fileInfo, my_uid, uploader_uids, e,
   this.file_to_save = fileInfo.file_to_save;
   this.file_to_save_tmp = fileInfo.file_to_save + '.tmp';
   this.uploaderUidList = uploader_uids.split(',');
-  this.descriptor = raf(d.file_to_save_tmp);
+  this.descriptor = raf(this.file_to_save_tmp);
   this.complete_parts = 0;
   this.total_parts = parseInt((fileInfo.size+settings.partsize-1)/settings.partsize);
   this.e = e;

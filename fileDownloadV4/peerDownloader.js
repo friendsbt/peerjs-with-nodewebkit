@@ -3,7 +3,7 @@ var path = require('path');
 var xxhash = require('xxhashjs');
 var crc32 = require('crc-32');
 var settings = require('./settings');
-var res_api = require('res/res_api');
+var res_api = require('../res/res_api');
 
 var browserWindow;
 exports.initWindow = function(window) {

@@ -26,7 +26,7 @@ function main(window){
 	});
 
   var my_uid = 'zuoyao';
-  // var my_uid = 'lizhihua';
+  //var my_uid = 'lizhihua';
 
 	io.sockets.on('connection', function(socket) {
     global.socket = socket;
@@ -38,6 +38,7 @@ function main(window){
     fileUploadV4.initWindow(window);
     fileDowloadV4.initWindow(window);
     require('./fileDownloadV4/peerDownloader.js').initWindow(window);
+    require('./res/res_api.js').initWindow(window);
 
     var hash = 213160533;  // 臆病者.mp3
     var size = 3830868;
