@@ -15,7 +15,7 @@ window.socket.on('send_block', function(dataNode2DOM){
 
 window.socket.on('download', function(downloadFileInfo){
   console.log("downloadFileInfo: ", JSON.stringify(downloadFileInfo));
-  PeerWrapper.download(downloadFileInfo.hash, downloadFileInfo.totalparts);
+  PeerWrapper.download(downloadFileInfo.hash, downloadFileInfo.parts_left);
 });
 
 window.socket.on('downloadBlock', function(redownloadMessage){

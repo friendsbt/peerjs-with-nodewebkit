@@ -1,5 +1,6 @@
 var fs = require('fs');
 var raf = require('random-access-file');
+var res_api = require('res/res_api');
 
 var downloaders = {};  // node 环境中保存所有downloader
 global.downloaders = downloaders;
@@ -41,9 +42,9 @@ function v4Downloader(fileInfo, my_uid, uploader_uids, e,
   };
 }
 
-v4Downloader.prototype.startFileDownload = function() {
+v4Downloader.prototype.startFileDownload = function(parts_left) {
   // update v4Downloader's state in innerDownloader
-  this.innerDownloader.startFileDownload();
+  this.innerDownloader.startFileDownload(parts_left);
 };
 
 v4Downloader.prototype.pauseFileDownload = function() {
@@ -91,7 +92,43 @@ exports.downloadFile = function(fileInfo, my_uid, uploader_uids,
     downloadProgressCallback
   );
   downloaders[fileInfo.hash] = d;
-  d.startFileDownload();
+  var parts_left = null;
+  var hash = parseInt(d.hash);
+  global.parts_left_collection.findOne(
+    {hash: parseInt(hash)},
+    function(err, doc) {
+      if (doc) {  // parts_left表中有对应项
+        parts_left = doc.parts_left;
+        // 检测文件是否已存在,如果已存在,并且没有剩余part,认为下载已完成
+        if (fs.existsSync(d.file_to_save) || fs.existsSync(d.file_to_save_tmp)){
+          if (parts_left.length === 0) {
+            browserWindow.console.log("already complete");
+            // TODO: call downloadOverCallback
+            res_api.remove_record_from_parts_left(hash);
+          } else { //文件已存在,且没有下载完成,进入【断点续传】模式
+            browserWindow.console.log("resume unfinished downloading");
+            browserWindow.console.log("parts_left: ", parts_left);
+          }
+        }
+        else {// 如果文件实际上不存在,则认为是一个全新下载,并更新parts_left表对应项
+          browserWindow.console.log("file does not exist, redownload file");
+          parts_left.length = 0;  // better way to make parts_left = []
+          for (var i = 0; i < d.total_parts; i++) {
+            parts_left.push(i);
+          }
+          res_api.update_parts_left(hash, parts_left);
+        }
+      } else { // 之前没有下载过这个文件
+        browserWindow.console.log("new download");
+        parts_left = [];
+        for (i = 0; i < d.total_parts; i++) {
+          parts_left.push(i); // 全新的下载, parts_left为所有的parts
+        }
+        res_api.update_parts_left(hash, parts_left);
+      }
+      d.startFileDownload(parts_left); // TODO; argument change
+    }
+  );
 };
 
 exports.pauseFileDownload = function(hash) {

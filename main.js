@@ -1,4 +1,6 @@
 var fs = require('fs');
+var Datastore = require('nedb');
+global.parts_left_collection = new Datastore({filename: "parts_left", autoload: true});
 
 process.on("uncaughtException", function(err){
   fs.appendFileSync('err.txt', err);

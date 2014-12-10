@@ -79,7 +79,7 @@ var PeerWrapper = {
             if (dataPeer2Peer.rangeLastBlock) { // ready for downloading next part
               conn.metadata.complete = true;
               console.log("part complete: ", conn.metadata.downloadingPartIndex);
-              window.socket.emit("part-complete", hash);
+              window.socket.emit("part-complete", {hash: hash, index: conn.metadata.downloadingPartIndex});
               e.emitEvent('part-complete-' + hash, [conn.peer]);
             }
             window.socket.emit('receive', {
@@ -116,13 +116,10 @@ var PeerWrapper = {
     this.uploadConnections[redownloadMessage.hash][arbitraryUploader].send(this.rangeInfo);
     console.log("redownload block: ", redownloadMessage.index, "from ", arbitraryUploader);
   },
-  download: function(hash, totalparts) {
+  download: function(hash, parts_left) {
     var that = this;
     var conn;
-    this.parts_left[hash] = [];
-    for (var i = 0; i < totalparts; i++) {
-      this.parts_left[hash].push(i);
-    }
+    this.parts_left[hash] = parts_left;
     this.downloadState[hash] = DOWNLOADING;
     e.addListener('part-complete-' + hash, function(uploader){
       if (that.downloadState[hash] === DOWNLOADING && that.parts_left[hash].length > 0){

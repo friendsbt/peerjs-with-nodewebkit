@@ -3,6 +3,7 @@ var path = require('path');
 var xxhash = require('xxhashjs');
 var crc32 = require('crc-32');
 var settings = require('./settings');
+var res_api = require('res/res_api');
 
 var browserWindow;
 exports.initWindow = function(window) {
@@ -29,10 +30,10 @@ global.socket.on('receive', function(dataDOM2Node){
   );
 });
 
-global.socket.on("part-complete", function(hash){
-  // TODO: 到底是在v4Downloader内部记录进度还是在全局的downloaders[hash]中记录?
-  // 可能张洋那边是需要在内部记录的. 如果是这样, 要把blocks_left 和 complete_parts_count 挪进v4Downloader
+global.socket.on("part-complete", function(partInfo){
+  var hash = partInfo.hash;
   downloaders[hash].complete_parts++;
+  res_api.remove_record_from_parts_left(hash, partInfo.index);
   if (downloaders[hash].complete_parts === downloaders[hash].total_parts) {
     browserWindow.console.log("receive complete, ", Date());
     setTimeout(function(){  // 最后一个block可能还没有写入, 必须延迟一点关闭文件
@@ -57,11 +58,8 @@ global.socket.on("part-complete", function(hash){
 });
 
 global.socket.on("uploader", function(info) { // 记录某个资源的上传者
-  if (!downloaders[info.hash].uploaders) {
-    downloaders[info.hash].uploaders = [];
-  }
-  // TODO: update DB
-  downloaders[info.hash].uploaders.push(info.uploader);
+  browserWindow.console.log("record uploader:", info.uploader);
+  res_api.record_uploader(info.hash, info.uploader);
 });
 
 var peerjsDownloader = function(fileInfo) {
@@ -70,11 +68,10 @@ var peerjsDownloader = function(fileInfo) {
   this.file_to_save = fileInfo.file_to_save;
 };
 
-peerjsDownloader.prototype.startFileDownload = function(){
-  var totalparts = parseInt((this.size + settings.partsize-1) / settings.partsize);
+peerjsDownloader.prototype.startFileDownload = function(parts_left){
   global.socket.emit('download', {
     hash: this.hash,
-    totalparts: totalparts
+    parts_left: parts_left
   });
 };
 
