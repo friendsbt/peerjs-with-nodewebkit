@@ -10,6 +10,7 @@ exports.initWindow = function(window) {
   browserWindow = window;
 };
 
+var BLOCK_SZIE = settings.BLOCK_SIZE;
 var downloaders = global.downloaders;
 
 global.socket.on('receive', function(dataDOM2Node){
