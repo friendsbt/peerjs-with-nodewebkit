@@ -107,7 +107,6 @@ exports.downloadFile = function(fileInfo, my_uid, uploader_uids,
           if (parts_left.length === 0) {
             browserWindow.console.log("already complete");
             // TODO: call downloadOverCallback
-            res_api.remove_record_from_parts_left(hash);
           } else { //文件已存在,且没有下载完成,进入【断点续传】模式
             browserWindow.console.log("resume unfinished downloading");
             browserWindow.console.log("parts_left: ", parts_left);

@@ -51,6 +51,10 @@ function remove_part_from_parts_left(hash, index) {
 }
 
 function remove_record_from_parts_left(hash) {
+  /*
+  下载完成之后不remove record, 因为要保证这个数据存在于数据库中
+  不至于被认为是一个新的下载
+   */
   global.parts_left_collection.remove(
     {hash: parseInt(hash)},
     {'multi': true},
