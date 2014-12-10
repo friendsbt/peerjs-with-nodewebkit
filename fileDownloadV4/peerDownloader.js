@@ -42,7 +42,7 @@ global.socket.on("part-complete", function(partInfo){
       if (parseInt(xxhash(0).update(fs.readFileSync(downloaders[hash].file_to_save_tmp)
         ).digest()) === 213160533) {
         browserWindow.console.log("hash equal");
-        browserWindow.console.log("download complete: ", path.basename(downloaders[hash].path));
+        browserWindow.console.log("download complete: ", path.basename(downloaders[hash].file_to_save));
         global.socket.emit("complete", hash);
         fs.rename(
           downloaders[hash].file_to_save_tmp,

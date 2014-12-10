@@ -120,6 +120,7 @@ exports.downloadFile = function(fileInfo, my_uid, uploader_uids,
             parts_left.push(i);
           }
           res_api.update_parts_left(hash, parts_left);
+          d.startFileDownload(parts_left);
         }
       } else { // 之前没有下载过这个文件
         browserWindow.console.log("new download");
@@ -128,8 +129,8 @@ exports.downloadFile = function(fileInfo, my_uid, uploader_uids,
           parts_left.push(i); // 全新的下载, parts_left为所有的parts
         }
         res_api.update_parts_left(hash, parts_left);
+        d.startFileDownload(parts_left);
       }
-      d.startFileDownload(parts_left); // TODO; argument change
     }
   );
 };
