@@ -111,6 +111,7 @@ exports.downloadFile = function(fileInfo, my_uid, uploader_uids,
           } else { //文件已存在,且没有下载完成,进入【断点续传】模式
             browserWindow.console.log("resume unfinished downloading");
             browserWindow.console.log("parts_left: ", parts_left);
+            d.startFileDownload(parts_left);
           }
         }
         else {// 如果文件实际上不存在,则认为是一个全新下载,并更新parts_left表对应项
