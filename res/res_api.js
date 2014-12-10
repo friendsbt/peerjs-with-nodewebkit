@@ -12,8 +12,11 @@ function update_parts_left(hash, parts_left) {
     {$set: {parts_left: parts_left}},
     {'multi': true, 'upsert': true},
     function (err, numReplaced) {
-      if (numReplaced !== 1) {
-        global.log.info("found duplicate parts_left docs");
+      if (numReplaced > 1) {
+        browserWindow.console.log("found duplicate parts_left docs");
+      }
+      if (numReplaced === 0) {
+        browserWindow.console.log("no such record in parts_left");
       }
       global.parts_left_collection.findOne(
         {hash: parseInt(hash)},
@@ -29,10 +32,13 @@ function remove_part_from_parts_left(hash, index) {
   global.parts_left_collection.update(
     {hash: parseInt(hash)},
     {$pull: {parts_left: index}},
-    {},
+    {'multi': true},
     function (err, numReplaced) {
-      if (numReplaced !== 1) {
-        global.log.info("found duplicate parts_left docs");
+      if (numReplaced === 0) {
+        browserWindow.console.log("no such record in parts_left");
+      }
+      if (numReplaced > 1) {
+        browserWindow.console.log("found duplicate parts_left docs");
       }
       global.parts_left_collection.findOne(
         {hash: parseInt(hash)},
@@ -52,6 +58,9 @@ function remove_record_from_parts_left(hash) {
       if (numReplaced === 0) {
         browserWindow.console.log("no such record in parts_left");
       }
+      if (numReplaced > 1) {
+        browserWindow.console.log("found duplicate parts_left docs");
+      }
       global.parts_left_collection.findOne(
         {hash: parseInt(hash)},
         function(err, doc) {
@@ -68,8 +77,11 @@ function record_uploader(hash, uploader_id) {
     {$addToSet: {uploaders: uploader_id}},  // append to Array
     {'multi': true, 'upsert': true},
     function (err, numReplaced) {
-      if (numReplaced !== 1) {
-        global.log.info("found duplicate parts_left docs");
+      if (numReplaced > 1) {
+        browserWindow.console.log("found duplicate parts_left docs");
+      }
+      if (numReplaced === 0) {
+        browserWindow.console.log("no such record in parts_left");
       }
       global.parts_left_collection.findOne(
         {hash: parseInt(hash)},

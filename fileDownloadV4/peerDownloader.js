@@ -34,7 +34,7 @@ global.socket.on('receive', function(dataDOM2Node){
 global.socket.on("part-complete", function(partInfo){
   var hash = partInfo.hash;
   downloaders[hash].complete_parts++;
-  res_api.remove_record_from_parts_left(hash, partInfo.index);
+  res_api.remove_part_from_parts_left(hash, partInfo.index);
   if (downloaders[hash].complete_parts === downloaders[hash].total_parts) {
     browserWindow.console.log("receive complete, ", Date());
     setTimeout(function(){  // 最后一个block可能还没有写入, 必须延迟一点关闭文件
