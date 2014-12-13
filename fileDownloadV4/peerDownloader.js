@@ -48,6 +48,7 @@ global.socket.on("part-complete", function(partInfo){
         browserWindow.console.log("hash equal");
         browserWindow.console.log("download complete: ", path.basename(downloaders[hash].file_to_save));
         global.socket.emit("complete", hash);
+        downloaders[hash].watcher.close();  // fs.FSWatcher.close()
         fs.rename(
           downloaders[hash].file_to_save_tmp,
           downloaders[hash].file_to_save,

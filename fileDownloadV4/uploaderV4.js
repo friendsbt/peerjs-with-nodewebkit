@@ -47,7 +47,8 @@ global.socket.on('send_data_blocks', function(msg) {
       browserWindow.console.log("read index ", index, "error");
       console.log(err);
     } else {
-      /*
+
+      // 为了测试时可操作, 我们不要发太快(´・ω・`)
       var intervalObj = setInterval(function() {
         if (index >= msg.end) {
           clearInterval(intervalObj);
@@ -77,7 +78,8 @@ global.socket.on('send_data_blocks', function(msg) {
           bytesIndex += BLOCK_SIZE;
         }
       }, 10);
-      */
+
+      /* 实际中用这个
       while (true) {  // 测试如果不用interval会又怎样的效果
         if (index >= msg.end) {
           dataNode2DOM = {
@@ -107,6 +109,7 @@ global.socket.on('send_data_blocks', function(msg) {
           bytesIndex += BLOCK_SIZE;
         }
       }
+      */
     }
   });
 });

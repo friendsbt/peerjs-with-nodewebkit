@@ -245,8 +245,8 @@ var PeerWrapper = {
     } else if (this.downloadState[hash]) {
       switch (state) {
         case DOWNLOADING:
-          console.log("resume downloading ", hash);
           if (this.downloadState[hash] === PAUSED) {
+            console.log("resume downloading ", hash);
             this.downloadState[hash] = DOWNLOADING;
             var conn;
             for (var uid in this.downloadConnections[hash]) {
@@ -260,14 +260,14 @@ var PeerWrapper = {
           }
           break;
         case PAUSED:
-          console.log("pause downloading ", hash);
           if (this.downloadState[hash] === DOWNLOADING) {
+            console.log("pause downloading ", hash);
             this.downloadState[hash] = PAUSED;
           }
           break;
         case CANCELED:
-          console.log("cancel downloading ", hash);
           if (this.downloadState[hash] === DOWNLOADING || this.downloadState[hash] === PAUSED) {
+            console.log("cancel downloading ", hash);
             this.downloadState[hash] = CANCELED;
             this.clear(hash);
           }
