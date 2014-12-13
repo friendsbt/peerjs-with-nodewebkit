@@ -231,7 +231,7 @@ var PeerWrapper = {
       .send(this.dataPeer2Peer);
   },
   setDownloadState: function(hash, state) {  // downloader call this
-    if (hash === ALREADY_COMPLETE) {
+    if (state === ALREADY_COMPLETE) {
       console.log("already complete", hash);
       // 可能之前已经接到连接了, 那么需要清除掉,
       if (this.downloadConnections[hash]) {
