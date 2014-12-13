@@ -38,9 +38,9 @@ var PeerWrapper = {
     });
     this.peer.on('connection', function(conn) {
       var hash = conn.label;
-      if (typeof(this.downloadState[hash]) === 'undefined') {
-        this.downloadState[hash] = DOWNLOADING;
-      } else if (this.downloadState[hash] === ALREADY_COMPLETE) {
+      if (typeof(that.downloadState[hash]) === 'undefined') {
+        that.downloadState[hash] = DOWNLOADING;
+      } else if (that.downloadState[hash] === ALREADY_COMPLETE) {
         conn.close();
         return;
       }
