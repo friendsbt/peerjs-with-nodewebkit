@@ -59,11 +59,12 @@ v4Downloader.prototype.startFileDownload = function(parts_left) {
         if (!fs.existsSync(file_watch)) {
           // tmp文件消失, 且真文件又不存在, 说明在下载过程中tmp被删除或者重命名, 直接取消下载, 并向上层报错
           if (!fs.existsSync(that.file_to_save)) {
-            res_api.remove_record_from_parts_left(that.hash);
             global.socket.emit("setState", {
               hash: that.hash,
               state: CANCELED
             });
+            that.cancelFileDownload();
+            that.watcher.close();
             // TODO: call downloadOverCallback with err
           }
         }
@@ -83,16 +84,18 @@ v4Downloader.prototype.resumeFileDownload = function() {
 };
 
 v4Downloader.prototype.cancelFileDownload = function() {
-  this.states.status = CANCELED;
-  this.innerDownloader.cancelFileDownload(this.states);
-  if (fs.existsSync(this.file_to_save_tmp)) {
-    fs.unlinkSync(this.file_to_save_tmp);
-  }
-  res_api.remove_record_from_parts_left(this.hash);
-  this.descriptor.close();
-  this.innerDownloader = null;
-  if (this.watcher) {
-    this.watcher.close();
+  if (this.states.status === DOWNLOADING || this.states.status === PAUSED) {
+    this.states.status = CANCELED;
+    this.innerDownloader.cancelFileDownload(this.states);
+    if (fs.existsSync(this.file_to_save_tmp)) {
+      fs.unlinkSync(this.file_to_save_tmp);
+    }
+    res_api.remove_record_from_parts_left(this.hash);
+    this.descriptor.close();
+    this.innerDownloader = null;
+    if (this.watcher) {
+      this.watcher.close();
+    }
   }
 };
 
