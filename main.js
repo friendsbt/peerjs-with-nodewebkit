@@ -47,6 +47,7 @@ function main(window){
       var fileInfo = {hash: hash, size: size, file_to_save: '臆病者.mp3'};
       fileDowloadV4.downloadFile(fileInfo, my_uid, uploader_uids);
 
+      /*
       // test pause and resume
       setTimeout(function(){
         fileDowloadV4.pauseFileDownload(hash);
@@ -54,6 +55,7 @@ function main(window){
           fileDowloadV4.resumeFileDownload(hash);
         }, 5000);
       }, 30000);
+      */
     }
     if (my_uid === 'zuoyao') {
       var downloader_uid = 'lizhihua';

@@ -15,11 +15,13 @@ var downloaders = global.downloaders;
 
 global.socket.on('receive', function(dataDOM2Node){
   var hash = dataDOM2Node.hash;
+  /*
   if (crc32.buf(dataDOM2Node.content) !== dataDOM2Node.checksum) {
     browserWindow.console.log(dataDOM2Node.index, "not equal");
     global.socket.emit("downloadBlock", {index: dataDOM2Node.index, hash: hash});
     return;
   }
+  */
   downloaders[hash].descriptor.write(
       dataDOM2Node.index * BLOCK_SIZE,
     dataDOM2Node.content,

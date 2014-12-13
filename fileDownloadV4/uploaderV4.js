@@ -47,6 +47,7 @@ global.socket.on('send_data_blocks', function(msg) {
       browserWindow.console.log("read index ", index, "error");
       console.log(err);
     } else {
+      /*
       var intervalObj = setInterval(function() {
         if (index >= msg.end) {
           clearInterval(intervalObj);
@@ -76,6 +77,36 @@ global.socket.on('send_data_blocks', function(msg) {
           bytesIndex += BLOCK_SIZE;
         }
       }, 10);
+      */
+      while (true) {  // 测试如果不用interval会又怎样的效果
+        if (index >= msg.end) {
+          dataNode2DOM = {
+            content: utils.toArrayBuffer(data.slice(bytesIndex, bytesIndex + msg.lastBlockSize)),
+            hash: msg.hash,
+            index: index,
+            downloader: msg.downloader,
+            test: msg.test
+          };
+          // 如果start=end, 说明是单独的重传请求, 这时 rangeLastBlock 应该为false
+          // 否则下载端接到这个块之后会认为一个part传完了, 但其实只是重传, 该part-complete消息
+          // 应该之前就emit过了
+          dataNode2DOM.rangeLastBlock = (msg.start !== msg.end);
+          global.socket.emit('send_block', dataNode2DOM);
+          break;
+        } else {
+          dataNode2DOM = {
+            content: utils.toArrayBuffer(data.slice(bytesIndex, bytesIndex + BLOCK_SIZE)),
+            hash: msg.hash,
+            index: index,
+            downloader: msg.downloader,
+            test: msg.test,
+            rangeLastBlock: false
+          };
+          global.socket.emit('send_block', dataNode2DOM);
+          index++;
+          bytesIndex += BLOCK_SIZE;
+        }
+      }
     }
   });
 });
