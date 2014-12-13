@@ -59,10 +59,6 @@ v4Downloader.prototype.startFileDownload = function(parts_left) {
         if (!fs.existsSync(file_watch)) {
           // tmp文件消失, 且真文件又不存在, 说明在下载过程中tmp被删除或者重命名, 直接取消下载, 并向上层报错
           if (!fs.existsSync(that.file_to_save)) {
-            global.socket.emit("setState", {
-              hash: that.hash,
-              state: CANCELED
-            });
             that.cancelFileDownload();
             that.watcher.close();
             // TODO: call downloadOverCallback with err
