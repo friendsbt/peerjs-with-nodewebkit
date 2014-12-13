@@ -58,6 +58,8 @@ global.socket.on("part-complete", function(partInfo){
       } else {
         browserWindow.console.log("hash not equal");
       }
+      downloaders[hash].innerDownloader = null;
+      delete downloaders[hash];
     }, 1000);
   }
 });

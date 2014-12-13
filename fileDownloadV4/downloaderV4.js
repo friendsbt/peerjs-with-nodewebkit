@@ -43,7 +43,6 @@ function v4Downloader(fileInfo, my_uid, uploader_uids, e,
 }
 
 v4Downloader.prototype.startFileDownload = function(parts_left) {
-  // update v4Downloader's state in innerDownloader
   this.innerDownloader.startFileDownload(parts_left);
 };
 
@@ -63,7 +62,9 @@ v4Downloader.prototype.cancelFileDownload = function() {
   if (fs.existsSync(this.file_to_save_tmp)) {
     fs.unlinkSync(this.file_to_save_tmp);
   }
-  // TODO: update nedb
+  res_api.remove_record_from_parts_left(this.hash);
+  this.descriptor.close();
+  this.innerDownloader = null;
 };
 
 v4Downloader.prototype.useForward = function() {
@@ -148,5 +149,5 @@ exports.resumeFileDownload = function(hash) {
 
 exports.cancelFileDownload = function(hash) {
   downloaders[hash].cancelFileDownload();
-  // TODO: clear downloaders
+  delete downloaders[hash];
 };
