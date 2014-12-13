@@ -41,6 +41,8 @@ global.socket.on("part-complete", function(partInfo){
       downloaders[hash].descriptor.close();
       if (parseInt(xxhash(0).update(fs.readFileSync(downloaders[hash].file_to_save_tmp)
         ).digest()) === 213160533) {
+        var timePassed = process.hrtime(global.startTime);  // for test
+        browserWindow.console.log("time passed: ", timePassed[0], " seconds");
         browserWindow.console.log("hash equal");
         browserWindow.console.log("download complete: ", path.basename(downloaders[hash].file_to_save));
         global.socket.emit("complete", hash);

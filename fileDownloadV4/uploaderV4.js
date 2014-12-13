@@ -75,7 +75,7 @@ global.socket.on('send_data_blocks', function(msg) {
           index++;
           bytesIndex += BLOCK_SIZE;
         }
-      }, 20);
+      }, 10);
     }
   });
 });

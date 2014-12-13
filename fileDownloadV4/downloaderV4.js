@@ -91,6 +91,7 @@ exports.downloadFile = function(fileInfo, my_uid, uploader_uids,
     downloadOverCallback,
     downloadProgressCallback
   );
+  global.startTime = process.hrtime();  // for test
   downloaders[fileInfo.hash] = d;
   var parts_left = null;
   var hash = parseInt(d.hash);
