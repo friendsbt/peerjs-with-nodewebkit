@@ -107,7 +107,7 @@ var PeerWrapper = {
           console.log('Connection to ' + conn.peer + ' has been closed.');
           if (!conn.metadata.complete) {  // 如果断掉的conn处于下载状态, 它正在下的part要重新下
             that.parts_left[hash].unshift(conn.metadata.downloadingPartIndex);
-            console.log("readding part ", conn.metadata.downloadingPartIndex, "to parts_left");
+            console.log("readding part", conn.metadata.downloadingPartIndex, "to parts_left");
           }
           delete that.downloadConnections[hash][conn.peer];
         });
@@ -277,8 +277,7 @@ var PeerWrapper = {
       console.log(hash, 'does not exist in downloadState');
     }
   },
-  clear: function(hash) { // clear resources after file download complete, downloader call this
-    console.assert(this.parts_left[hash].length === 0, "parts_left.length != 0");
+  clear: function(hash) { // clear resources if download complete or canceled, downloader call this
     for (var uid in this.downloadConnections[hash]) {
       if (this.downloadConnections[hash].hasOwnProperty(uid)){
         this.downloadConnections[hash][uid].close();

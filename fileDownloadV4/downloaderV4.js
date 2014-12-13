@@ -47,17 +47,16 @@ v4Downloader.prototype.startFileDownload = function(parts_left) {
   var file_watch = this.file_to_save_tmp;
   var that = this;
   var intervalObj = setInterval(function(){
+    // since we can't watch a non-existent file, watch has to be called after file creation
     if (fs.existsSync(file_watch)) {
       watchFile();
       clearInterval(intervalObj);
     }
   }, 1000);
   function watchFile() {
-    that.watcher = fs.watch(file_watch, function (event, who) {
-      if (event === 'rename' && who === file_watch) {
-        if (fs.existsSync(file_watch)) {
-          // file created
-        } else {
+    that.watcher = fs.watch(file_watch, function (event) {
+      if (event === 'rename') {
+        if (!fs.existsSync(file_watch)) {
           // tmp文件消失, 且真文件又不存在, 说明在下载过程中tmp被删除或者重命名, 直接取消下载, 并向上层报错
           if (!fs.existsSync(that.file_to_save)) {
             res_api.remove_record_from_parts_left(that.hash);
@@ -92,6 +91,9 @@ v4Downloader.prototype.cancelFileDownload = function() {
   res_api.remove_record_from_parts_left(this.hash);
   this.descriptor.close();
   this.innerDownloader = null;
+  if (this.watcher) {
+    this.watcher.close();
+  }
 };
 
 v4Downloader.prototype.useForward = function() {
