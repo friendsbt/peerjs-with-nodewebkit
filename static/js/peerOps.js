@@ -39,9 +39,12 @@ var PeerWrapper = {
     this.peer.on('connection', function(conn) {
       var hash = conn.label;
       if (typeof(that.downloadState[hash]) === 'undefined') {
+        // in case PeerWrapper.download hasn'e been invoked at this moment
         that.downloadState[hash] = DOWNLOADING;
       } else if (that.downloadState[hash] === ALREADY_COMPLETE) {
-        conn.close();
+        setTimeout(function(){
+          conn.close(); // delay is necessary, otherwise close has no effect
+        }, 1000);
         return;
       }
       if (!that.downloadConnections[hash]) {
