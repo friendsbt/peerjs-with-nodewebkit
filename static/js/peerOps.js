@@ -38,6 +38,10 @@ var PeerWrapper = {
     });
     this.peer.on('connection', function(conn) {
       var hash = conn.label;
+      if (this.downloadState[hash] === ALREADY_COMPLETE) {
+        conn.close();
+        return;
+      }
       if (!that.downloadConnections[hash]) {
         that.downloadConnections[hash] = {};
       }
@@ -63,7 +67,7 @@ var PeerWrapper = {
               that.rangeInfo.start = BLOCK_IN_PART * part_index;
               that.rangeInfo.end = that.rangeInfo.start + BLOCK_IN_PART - 1;
               conn.metadata.downloadingPartIndex = part_index;
-              that.rangeInfo.test = false;  // real data package, not testing package
+              that.rangeInfo.test = false;
               conn.send(that.rangeInfo);
               console.log("download part", part_index, "from", conn.peer);
             }
@@ -252,6 +256,15 @@ var PeerWrapper = {
           console.log("cancel downloading ", hash);
           if (this.downloadState[hash] === DOWNLOADING || this.downloadState[hash] === PAUSED) {
             this.downloadState[hash] = CANCELED;
+            this.clear(hash);
+          }
+          break;
+        case ALREADY_COMPLETE:
+          console.log("already complete", hash);
+          this.parts_left[hash] = [];
+          this.downloadState[hash] = ALREADY_COMPLETE;
+          // 可能之前已经接到连接了, 那么需要清除掉,
+          if (this.downloadConnections[hash]) {
             this.clear(hash);
           }
           break;

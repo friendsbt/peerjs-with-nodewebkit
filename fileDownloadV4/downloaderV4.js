@@ -110,6 +110,10 @@ exports.downloadFile = function(fileInfo, my_uid, uploader_uids,
             browserWindow.console.log("already complete");
             d.complete_parts = d.total_parts;
             // TODO: call downloadOverCallback
+            global.socket.emit('setState', {
+              hash: hash,
+              state: ALREADY_COMPLETE
+            });
           } else { //文件已存在,且没有下载完成,进入【断点续传】模式
             browserWindow.console.log("resume unfinished downloading");
             browserWindow.console.log("parts_left: ", parts_left);
