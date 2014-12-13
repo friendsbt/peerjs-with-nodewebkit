@@ -38,7 +38,9 @@ var PeerWrapper = {
     });
     this.peer.on('connection', function(conn) {
       var hash = conn.label;
-      if (this.downloadState[hash] === ALREADY_COMPLETE) {
+      if (typeof(this.downloadState[hash]) === 'undefined') {
+        this.downloadState[hash] = DOWNLOADING;
+      } else if (this.downloadState[hash] === ALREADY_COMPLETE) {
         conn.close();
         return;
       }
@@ -229,7 +231,15 @@ var PeerWrapper = {
       .send(this.dataPeer2Peer);
   },
   setDownloadState: function(hash, state) {  // downloader call this
-    if (this.downloadState[hash]) {
+    if (hash === ALREADY_COMPLETE) {
+      console.log("already complete", hash);
+      // 可能之前已经接到连接了, 那么需要清除掉,
+      if (this.downloadConnections[hash]) {
+        this.clear(hash);
+      }
+      // 设定状态, 阻止后续连接
+      this.downloadState[hash] = ALREADY_COMPLETE;
+    } else if (this.downloadState[hash]) {
       switch (state) {
         case DOWNLOADING:
           console.log("resume downloading ", hash);
@@ -259,15 +269,6 @@ var PeerWrapper = {
             this.clear(hash);
           }
           break;
-        case ALREADY_COMPLETE:
-          console.log("already complete", hash);
-          this.parts_left[hash] = [];
-          this.downloadState[hash] = ALREADY_COMPLETE;
-          // 可能之前已经接到连接了, 那么需要清除掉,
-          if (this.downloadConnections[hash]) {
-            this.clear(hash);
-          }
-          break;
       }
     } else {
       console.log(hash, 'does not exist in downloadState');
@@ -281,9 +282,15 @@ var PeerWrapper = {
         delete this.downloadConnections[hash][uid];
       }
     }
-    delete this.downloadConnections[hash];
-    delete this.downloadState[hash];
-    delete this.parts_left[hash];
+    if (this.downloadConnections[hash]) {
+      delete this.downloadConnections[hash];
+    }
+    if (this.downloadState[hash]) {
+      delete this.downloadState[hash];
+    }
+    if (this.parts_left[hash]) {
+      delete this.parts_left[hash];
+    }
   }
 };
 
