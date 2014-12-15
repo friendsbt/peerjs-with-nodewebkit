@@ -169,8 +169,8 @@ var PeerWrapper = {
         conn.on('data', function(rangeInfo){
           console.log('got data: ', rangeInfo);
           if (typeof(rangeInfo.start)==='undefined' || typeof(rangeInfo.end)==='undefined') {
-            if (rangeInfo === "close") {
-              window.socket.emit("close", fileInfo.path);  // notify uploader to close fd
+            if (rangeInfo === "closefd") {
+              window.socket.emit("closefd", fileInfo.path);  // notify uploader to close fd
             } else {
               console.log('block range format wrong!');
               conn.close();
@@ -285,7 +285,7 @@ var PeerWrapper = {
     var that = this;
     for (var uid in this.downloadConnections[hash]) {
       if (this.downloadConnections[hash].hasOwnProperty(uid)) {
-        this.downloadConnections[hash][uid].send("close");
+        this.downloadConnections[hash][uid].send("closefd");
       }
     }
     setTimeout(function(){

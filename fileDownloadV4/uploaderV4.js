@@ -34,7 +34,7 @@ exports.initV4Upload = function(my_uid, downloader_uid, hash, filesize){
   });
 };
 
-global.socket.on("close", function(path){
+global.socket.on("closefd", function(path){
   if (fds[path]) {
     fs.close(fds[path], function(err){
       if (err) {
