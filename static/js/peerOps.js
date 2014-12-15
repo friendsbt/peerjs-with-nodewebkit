@@ -169,12 +169,8 @@ var PeerWrapper = {
         conn.on('data', function(rangeInfo){
           console.log('got data: ', rangeInfo);
           if (typeof(rangeInfo.start)==='undefined' || typeof(rangeInfo.end)==='undefined') {
-            if (rangeInfo === "closefd") {
-              window.socket.emit("closefd", fileInfo.path);  // notify uploader to close fd
-            } else {
-              console.log('block range format wrong!');
-              conn.close();
-            }
+            console.log('block range format wrong!');
+            conn.close();
           } else {
             if (rangeInfo.start === rangeInfo.end) {
               console.log("got redownload rangeInfo");
@@ -200,6 +196,7 @@ var PeerWrapper = {
         conn.on('close', function(){
           console.log('Connection to ' + conn.peer + ' has been closed.');
           delete that.uploadConnections[fileInfo.hash][conn.peer];
+          window.socket.emit("closefd", fileInfo.path);  // notify uploader to close fd
           // MUSTN'T delete uploadConnections[hash], cause maybe uploading to others
         });
       });
@@ -282,29 +279,21 @@ var PeerWrapper = {
     }
   },
   clear: function(hash) { // clear resources if download complete or canceled, downloader call this
-    var that = this;
     for (var uid in this.downloadConnections[hash]) {
-      if (this.downloadConnections[hash].hasOwnProperty(uid)) {
-        this.downloadConnections[hash][uid].send("closefd");
+      if (this.downloadConnections[hash].hasOwnProperty(uid)){
+        this.downloadConnections[hash][uid].close();
+        delete this.downloadConnections[hash][uid];
       }
     }
-    setTimeout(function(){
-      for (uid in that.downloadConnections[hash]) {
-        if (that.downloadConnections[hash].hasOwnProperty(uid)){
-          that.downloadConnections[hash][uid].close();
-          delete that.downloadConnections[hash][uid];
-        }
-      }
-      if (that.downloadConnections[hash]) {
-        delete that.downloadConnections[hash];
-      }
-      if (this.downloadState[hash]) {
-        delete this.downloadState[hash];
-      }
-      if (that.parts_left[hash]) {
-        delete that.parts_left[hash];
-      }
-    }, 2000);
+    if (this.downloadConnections[hash]) {
+      delete this.downloadConnections[hash];
+    }
+    if (this.downloadState[hash]) {
+      delete this.downloadState[hash];
+    }
+    if (this.parts_left[hash]) {
+      delete this.parts_left[hash];
+    }
   }
 };
 
