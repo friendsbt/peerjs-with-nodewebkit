@@ -22,7 +22,6 @@ exports.initV4Upload = function(my_uid, downloader_uid, hash, filesize){
   if (!fds[path]) {
     fds[path] = fs.openSync(spath.join(spath.dirname(__dirname), '臆病者.mp3'), 'r');
   }
-  // TODO: when to close? conn close send a msg here?
   global.socket.emit('connect_downloader', {
     'my_uid': my_uid,
     'downloader_uid': downloader_uid,
@@ -37,8 +36,13 @@ exports.initV4Upload = function(my_uid, downloader_uid, hash, filesize){
 
 global.socket.on("close", function(path){
   if (fds[path]) {
-    fds[path].close();
-    browserWindow.console.log("uploader close fd");
+    fs.close(fds[path], function(err){
+      if (err) {
+        browserWindow.console.log(err);
+      } else {
+        browserWindow.console.log("uploader close fd");
+      }
+    });
   }
 });
 
