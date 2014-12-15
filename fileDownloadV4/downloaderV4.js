@@ -58,6 +58,7 @@ v4Downloader.prototype.startFileDownload = function(parts_left) {
       if (event === 'rename') {
         if (!fs.existsSync(file_watch)) {
           // tmp文件消失, 且真文件又不存在, 说明在下载过程中tmp被删除或者重命名, 直接取消下载, 并向上层报错
+          browserWindow.console.log("file removed or renamed during downloading.");
           if (!fs.existsSync(that.file_to_save)) {
             that.cancelFileDownload();
             that.watcher.close();

@@ -19,7 +19,9 @@ exports.initV4Upload = function(my_uid, downloader_uid, hash, filesize){
   browserWindow.console.log('totalblock:' + totalFullBlocks.toString());
   browserWindow.console.log('lastblocksize:' + realLastBlockSize.toString());
   var path = '臆病者.mp3';  // TODO: retrieve from db
-  fds[path] = fs.openSync(spath.join(spath.dirname(__dirname), '臆病者.mp3'), 'r');
+  if (!fds[path]) {
+    fds[path] = fs.openSync(spath.join(spath.dirname(__dirname), '臆病者.mp3'), 'r');
+  }
   // TODO: when to close? conn close send a msg here?
   global.socket.emit('connect_downloader', {
     'my_uid': my_uid,
@@ -32,6 +34,13 @@ exports.initV4Upload = function(my_uid, downloader_uid, hash, filesize){
     }
   });
 };
+
+global.socket.on("close", function(path){
+  if (fds[path]) {
+    fds[path].close();
+    browserWindow.console.log("uploader close fd");
+  }
+});
 
 global.socket.on('send_data_blocks', function(msg) {
   /*
