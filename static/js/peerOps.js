@@ -79,7 +79,7 @@ var PeerWrapper = {
           } else {
             conn.close(); // notify uploader
           }
-        }, 3000);
+        }, 2000);
         conn.on('data', function(dataPeer2Peer) {
           if (dataPeer2Peer.test) {
             console.log("got test package from ", conn.peer);
@@ -147,6 +147,15 @@ var PeerWrapper = {
         return true;  // remove listener
       }
     });
+    setTimeout(function(){
+      // if no reliable connection after 10s, use forward downloading strategy.
+      if (!that.downloadConnections[hash] || !that.downloadConnections[hash].length) {
+        // 设定成ALREADY_COMPLETE状态来阻止后续连接
+        console.log("no reliable uploader, use forward downloading.");
+        that.setDownloadState(hash, ALREADY_COMPLETE);
+        window.socket.emit("forward", hash);
+      }
+    }, 10000);
   },
   upload: function(my_uid, downloader_uid, fileInfo, try_count){
     var that = this;
@@ -237,10 +246,7 @@ var PeerWrapper = {
   setDownloadState: function(hash, state) {  // downloader call this
     if (state === ALREADY_COMPLETE) {
       console.log("already complete", hash);
-      // 可能之前已经接到连接了, 那么需要清除掉,
-      if (this.downloadConnections[hash]) {
-        this.clear(hash);
-      }
+      this.clear(hash);
       // 设定状态, 阻止后续连接
       this.downloadState[hash] = ALREADY_COMPLETE;
     } else if (this.downloadState[hash]) {
@@ -279,10 +285,12 @@ var PeerWrapper = {
     }
   },
   clear: function(hash) { // clear resources if download complete or canceled, downloader call this
-    for (var uid in this.downloadConnections[hash]) {
-      if (this.downloadConnections[hash].hasOwnProperty(uid)){
-        this.downloadConnections[hash][uid].close();
-        delete this.downloadConnections[hash][uid];
+    if (this.downloadConnections[hash]) {
+      for (var uid in this.downloadConnections[hash]) {
+        if (this.downloadConnections[hash].hasOwnProperty(uid)) {
+          this.downloadConnections[hash][uid].close();
+          delete this.downloadConnections[hash][uid];
+        }
       }
     }
     if (this.downloadConnections[hash]) {
@@ -294,6 +302,7 @@ var PeerWrapper = {
     if (this.parts_left[hash]) {
       delete this.parts_left[hash];
     }
+    e.removeEvent('part-complete-' + hash);
   }
 };
 

@@ -35,11 +35,7 @@ function v4Downloader(fileInfo, my_uid, uploader_uids, e,
   this.e = e;
   this.downloadOverCallback = downloadOverCallback;
   this.downloadProgressCallback = downloadProgressCallback;
-  this.states = {
-    status: DOWNLOADING,
-    progress: 0,
-    error: null
-  };
+  this.status = DOWNLOADING;
 }
 
 v4Downloader.prototype.startFileDownload = function(parts_left) {

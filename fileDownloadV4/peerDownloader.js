@@ -70,6 +70,10 @@ global.socket.on("uploader", function(info) { // 记录某个资源的上传者
   res_api.record_uploader(info.hash, info.uploader);
 });
 
+global.socket.on("forward", function(hash){  // 切换转发模式
+  downloaders[hash].useForward();
+});
+
 var peerjsDownloader = function(fileInfo) {
   this.hash = fileInfo.hash;
   this.size = fileInfo.size;
