@@ -95,6 +95,7 @@ v4Downloader.prototype.cancelFileDownload = function() {
 v4Downloader.prototype.useForward = function() {
   // can't use Peerjs so use forward mode
   // TODO: safe delete this.innerDownloader, simple delete may leak memory
+  /*
   delete this.innerDownloader;
   this.innerDownloader = new forwardDownloader(
     this.fileInfo,
@@ -105,6 +106,7 @@ v4Downloader.prototype.useForward = function() {
     this.downloadProgressCallback
   );
   this.innerDownloader.startFileDownload();
+  */
 };
 
 exports.downloadFile = function(fileInfo, my_uid, uploader_uids,

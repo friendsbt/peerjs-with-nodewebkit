@@ -245,7 +245,7 @@ var PeerWrapper = {
   },
   setDownloadState: function(hash, state) {  // downloader call this
     if (state === ALREADY_COMPLETE) {
-      console.log("already complete", hash);
+      console.log("already complete or timeout", hash);
       this.clear(hash);
       // 设定状态, 阻止后续连接
       this.downloadState[hash] = ALREADY_COMPLETE;
