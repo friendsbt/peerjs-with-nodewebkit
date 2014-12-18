@@ -63,6 +63,7 @@ global.socket.on("part-complete", function(partInfo){
       delete downloaders[hash];
     }, 1000);
   }
+  // TODO: call downloadProgressCallback
 });
 
 global.socket.on("uploader", function(info) { // 记录某个资源的上传者

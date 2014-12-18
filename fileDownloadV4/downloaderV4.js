@@ -36,6 +36,14 @@ function v4Downloader(fileInfo, my_uid, uploader_uids, e,
   this.downloadOverCallback = downloadOverCallback;
   this.downloadProgressCallback = downloadProgressCallback;
   this.status = DOWNLOADING;
+  this.lastDownloadState = {
+    lastTime: Date.now() / 1000,
+    calcSpeed: function (nowTime) {
+      var speed = settings.partsize / (nowTime - this.lastTime);
+      this.lastTime = nowTime;
+      return speed;
+    }
+  };
 }
 
 v4Downloader.prototype.startFileDownload = function(parts_left) {
@@ -67,19 +75,19 @@ v4Downloader.prototype.startFileDownload = function(parts_left) {
 };
 
 v4Downloader.prototype.pauseFileDownload = function() {
-  this.states.status = PAUSED;
-  this.innerDownloader.pauseFileDownload(this.states);
+  this.status = PAUSED;
+  this.innerDownloader.pauseFileDownload();
 };
 
 v4Downloader.prototype.resumeFileDownload = function() {
-  this.states.status = DOWNLOADING;
-  this.innerDownloader.resumeFileDownload(this.states);
+  this.status = DOWNLOADING;
+  this.innerDownloader.resumeFileDownload();
 };
 
 v4Downloader.prototype.cancelFileDownload = function() {
-  if (this.states.status === DOWNLOADING || this.states.status === PAUSED) {
-    this.states.status = CANCELED;
-    this.innerDownloader.cancelFileDownload(this.states);
+  if (this.status === DOWNLOADING || this.status === PAUSED) {
+    this.status = CANCELED;
+    this.innerDownloader.cancelFileDownload();
     if (fs.existsSync(this.file_to_save_tmp)) {
       fs.unlinkSync(this.file_to_save_tmp);
     }
