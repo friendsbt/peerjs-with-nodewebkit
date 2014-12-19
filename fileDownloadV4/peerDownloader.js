@@ -63,7 +63,13 @@ global.socket.on("part-complete", function(partInfo){
       delete downloaders[hash];
     }, 1000);
   }
-  // TODO: call downloadProgressCallback
+  var download_Bs = downloaders[hash].complete_parts * settings.partsize;
+  var progress = downloaders[hash].complete_parts / downloaders[hash].total_parts;
+  var downloadSpeed = downloaders[hash].lastDownloadState.calcSpeed(Date.now()/1000);
+  browserWindow.console.log("download_Bs:", download_Bs);
+  browserWindow.console.log("progress:", progress);
+  browserWindow.console.log("speed:(Bytes/s)", downloadSpeed);
+  //downloaders[hash].downloadProgressCallback(download_Bs, progress, downloadSpeed);
 });
 
 global.socket.on("uploader", function(info) { // 记录某个资源的上传者
