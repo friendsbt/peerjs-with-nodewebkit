@@ -26,12 +26,12 @@ function main(window){
 	});
 
   var config = JSON.parse(fs.readFileSync('config.json'));
-  var my_uid = config.user;
   var hash = config.hash;
   var size = config.size;
   var filepath = config.filepath;
   global.hash = hash;
   global.filepath = filepath;
+  var my_uid = JSON.parse(fs.readFileSync('user.json')).user;
 
 	io.sockets.on('connection', function(socket) {
     global.socket = socket;
