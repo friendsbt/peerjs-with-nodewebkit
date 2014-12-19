@@ -18,7 +18,7 @@ exports.initV4Upload = function(my_uid, downloader_uid, hash, filesize){
   var realLastBlockSize = filesize - BLOCK_SIZE * totalFullBlocks;
   browserWindow.console.log('totalblock:' + totalFullBlocks.toString());
   browserWindow.console.log('lastblocksize:' + realLastBlockSize.toString());
-  var path = '臆病者.mp3';  // TODO: retrieve from db
+  var path = global.filepath;  // TODO: retrieve from db
   if (!fds[path]) {
     fds[path] = fs.openSync(spath.join(spath.dirname(__dirname), '臆病者.mp3'), 'r');
   }

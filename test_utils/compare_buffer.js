@@ -4,8 +4,11 @@ var beq = require('buffer-equal');
 var utils = require('../fileDownloadV4/utils');
 var crc32 = require('crc-32');
 
-var f1 = fs.openSync(path.join(__dirname, '../臆病者.mp3'), 'r');
-var f2 = fs.openSync(path.join(__dirname, '../臆病者1.mp3'), 'r');
+var config = JSON.parse(fs.readFileSync('config.json'));
+var filepath = config.filepath;
+
+var f1 = fs.openSync(path.join(__dirname, path.dirname(filepath)), 'r');
+var f2 = fs.openSync(path.join(__dirname, path.dirname('臆病者1.mp3')), 'r');
 var bf1 = Buffer(1024);
 var bf2 = Buffer(1024);
 

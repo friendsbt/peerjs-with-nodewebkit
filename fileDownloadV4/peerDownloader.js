@@ -42,7 +42,7 @@ global.socket.on("part-complete", function(partInfo){
     setTimeout(function(){  // 最后一个block可能还没有写入, 必须延迟一点关闭文件
       downloaders[hash].descriptor.close();
       if (parseInt(xxhash(0).update(fs.readFileSync(downloaders[hash].file_to_save_tmp)
-        ).digest()) === 213160533) {
+        ).digest()) === global.hash) {
         var timePassed = process.hrtime(global.startTime);  // for test
         browserWindow.console.log("time passed: ", timePassed[0], " seconds");
         browserWindow.console.log("hash equal");

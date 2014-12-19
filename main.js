@@ -25,8 +25,13 @@ function main(window){
 		res.render("index");
 	});
 
-  var my_uid = 'zuoyao';
-  //var my_uid = 'lizhihua';
+  var config = JSON.parse(fs.readFileSync('config.json'));
+  var my_uid = config.user;
+  var hash = config.hash;
+  var size = config.size;
+  var filepath = config.filepath;
+  global.hash = hash;
+  global.filepath = filepath;
 
 	io.sockets.on('connection', function(socket) {
     global.socket = socket;
@@ -40,22 +45,18 @@ function main(window){
     require('./fileDownloadV4/peerDownloader.js').initWindow(window);
     require('./res/res_api.js').initWindow(window);
 
-    var hash = 213160533;  // 臆病者.mp3
-    var size = 3830868;
     if (my_uid === 'lizhihua') {
       var uploader_uids = 'zuoyao';
-      var fileInfo = {hash: hash, size: size, file_to_save: '臆病者.mp3'};
+      var fileInfo = {hash: hash, size: size, file_to_save: filepath};
       fileDowloadV4.downloadFile(fileInfo, my_uid, uploader_uids);
 
-      /*
       // test pause and resume
       setTimeout(function(){
         fileDowloadV4.pauseFileDownload(hash);
         setTimeout(function(){
           fileDowloadV4.resumeFileDownload(hash);
         }, 5000);
-      }, 30000);
-      */
+      }, 10000);
     }
     if (my_uid === 'zuoyao') {
       var downloader_uid = 'lizhihua';
