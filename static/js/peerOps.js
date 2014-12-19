@@ -149,7 +149,7 @@ var PeerWrapper = {
     });
     setTimeout(function(){
       // if no reliable connection after 10s, use forward downloading strategy.
-      if (!that.downloadConnections[hash] || !that.downloadConnections[hash].length) {
+      if (!that.downloadConnections[hash] || !Object.keys(that.downloadConnections[hash]).length) {
         // 设定成ALREADY_COMPLETE状态来阻止后续连接
         console.log("no reliable uploader, use forward downloading.");
         that.setDownloadState(hash, ALREADY_COMPLETE);
@@ -232,16 +232,23 @@ var PeerWrapper = {
     } else if (this.dataPeer2Peer.test) {
       delete this.dataPeer2Peer.test;
     }
-    if (dataNode2DOM.rangeLastBlock) {
-      this.dataPeer2Peer.rangeLastBlock = true;
-      console.log('last block of this part ', Date());
-      console.log("buffersize: ",
-        PeerWrapper.uploadConnections[dataNode2DOM.hash][dataNode2DOM.downloader].bufferSize);
-    } else if (this.dataPeer2Peer.rangeLastBlock) {
-      delete this.dataPeer2Peer.rangeLastBlock;
+    try {
+      if (dataNode2DOM.rangeLastBlock) {
+        this.dataPeer2Peer.rangeLastBlock = true;
+        console.log('last block of this part ', Date());
+        console.log("buffersize: ",
+          PeerWrapper.uploadConnections[dataNode2DOM.hash][dataNode2DOM.downloader].bufferSize);
+      } else if (this.dataPeer2Peer.rangeLastBlock) {
+        delete this.dataPeer2Peer.rangeLastBlock;
+      }
+      PeerWrapper.uploadConnections[dataNode2DOM.hash][dataNode2DOM.downloader]
+        .send(this.dataPeer2Peer);
+    } catch(e) {
+      if (!e instanceof TypeError) {  // ignore TypeError, happens when downloader cancelled download
+        console.log(e);
+        throw e;
+      }
     }
-    PeerWrapper.uploadConnections[dataNode2DOM.hash][dataNode2DOM.downloader]
-      .send(this.dataPeer2Peer);
   },
   setDownloadState: function(hash, state) {  // downloader call this
     if (state === ALREADY_COMPLETE) {
