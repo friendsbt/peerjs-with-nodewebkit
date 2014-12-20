@@ -6,6 +6,18 @@ exports.initWindow = function(window) {
   browserWindow = window;
 };
 
+function get_parts_left(hash, callback) {
+  global.parts_left_collection.findOne(
+    {hash: parseInt(hash)},
+    function(err, doc) {
+      if (err) {
+        browserWindow.console.log(err);
+      }
+      callback(doc ? doc.parts_left : null);
+    }
+  );
+}
+
 function update_parts_left(hash, parts_left) {
   global.parts_left_collection.update(
     {hash: parseInt(hash)},
@@ -75,6 +87,18 @@ function remove_record_from_parts_left(hash) {
   );
 }
 
+function get_uploaders(hash, callback) {
+  global.parts_left_collection.findOne(
+    {hash: parseInt(hash)},
+    function(err, doc){
+      if (err) {
+        browserWindow.console.log(err);
+      }
+      callback(doc ? doc.uploaders : null);
+    }
+  );
+}
+
 function record_uploader(hash, uploader_id) {
   global.parts_left_collection.update(
     {hash: parseInt(hash)},
@@ -97,7 +121,9 @@ function record_uploader(hash, uploader_id) {
   );
 }
 
+exports.get_parts_left = get_parts_left;
 exports.update_parts_left = update_parts_left;
 exports.remove_part_from_parts_left = remove_part_from_parts_left;
 exports.remove_record_from_parts_left = remove_record_from_parts_left;
+exports.get_uploaders = get_uploaders;
 exports.record_uploader = record_uploader;
