@@ -25,7 +25,11 @@ var PeerWrapper = {
     this.peer.on('error', function(err){
       console.log(err);
       if (err.type === "unavailable-id") {
-        that.peer = new Peer(my_uid + Date.now(), peerConfig);
+        //that.peer = new Peer(my_uid + Date.now(), peerConfig);
+        /*
+        这里假设peerjs-server一定能正常下线用户, 如果不能, 似乎只能重启来解决了
+         */
+        console.log("unavailable id");
       }
     });
     this.peer.on('disconnected', function(){
@@ -312,5 +316,3 @@ var PeerWrapper = {
     e.removeEvent('part-complete-' + hash);
   }
 };
-
-// TODO: 现在关闭进程时有可能 peer-server 检测不到下线
