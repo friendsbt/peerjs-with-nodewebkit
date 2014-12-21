@@ -129,11 +129,8 @@ exports.downloadFile = function(fileInfo, my_uid, uploader_uids,
   );
   global.startTime = process.hrtime();  // for test
   downloaders[fileInfo.hash] = d;
-  var parts_left = null;
-  var hash = parseInt(d.hash);
-  res_api.get_parts_left(hash, function(doc){
-    if (doc) {  // parts_left表中有对应项
-      parts_left = doc.parts_left;
+  res_api.get_parts_left(d.hash, function(parts_left){
+    if (parts_left) {  // parts_left表中有对应项
       // 检测文件是否已存在,如果已存在,并且没有剩余part,认为下载已完成
       if (fs.existsSync(d.file_to_save) || fs.existsSync(d.file_to_save_tmp)){
         if (parts_left.length === 0) {
@@ -150,8 +147,7 @@ exports.downloadFile = function(fileInfo, my_uid, uploader_uids,
           d.complete_parts = d.total_parts - parts_left.length;
           d.startFileDownload(parts_left);
         }
-      }
-      else {// 如果文件实际上不存在,则认为是一个全新下载,并更新parts_left表对应项
+      } else {// 如果文件实际上不存在,则认为是一个全新下载,并更新parts_left表对应项
         browserWindow.console.log("file does not exist, redownload file");
         parts_left.length = 0;  // better way to make parts_left = []
         for (var i = 0; i < d.total_parts; i++) {
