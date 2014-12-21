@@ -41,22 +41,22 @@ var PeerWrapper = {
       console.log("connect to server");
     });
     this.peer.on('connection', function(conn) {
-      var hash = conn.label;
-      if (typeof(that.downloadState[hash]) === 'undefined') {
-        // in case PeerWrapper.download hasn'e been invoked at this moment
-        that.downloadState[hash] = DOWNLOADING;
-      } else if (that.downloadState[hash] === ALREADY_COMPLETE) {
-        setTimeout(function(){
-          conn.close(); // delay is necessary, otherwise close has no effect
-        }, 1000);
-        return;
-      }
-      if (!that.downloadConnections[hash]) {
-        that.downloadConnections[hash] = {};
-      }
       console.log("Got connection from uploader: " + conn.peer);  // Fire for downloader
       conn.on('open', function() {
         console.log("connected to downloader: " + conn.peer);
+        var hash = conn.label;
+        if (typeof(that.downloadState[hash]) === 'undefined') {
+          // in case PeerWrapper.download hasn'e been invoked at this moment
+          that.downloadState[hash] = DOWNLOADING;
+        } else if (that.downloadState[hash] === ALREADY_COMPLETE) {
+          setTimeout(function(){
+            conn.close(); // delay is necessary, otherwise close has no effect
+          }, 1000);
+          return;
+        }
+        if (!that.downloadConnections[hash]) {
+          that.downloadConnections[hash] = {};
+        }
         that.downloadConnections[hash][conn.peer] = conn;
         conn.metadata.complete = true;
         // 下载端发送可靠性测试rangeInfo
@@ -221,8 +221,9 @@ var PeerWrapper = {
     }
     setTimeout(function(){  // try 3 times if connection failed
       if (try_count < MAX_TRY && !connected) {
-        conn.close();
         that.upload(my_uid, downloader_uid, fileInfo, try_count+1);
+      } else {
+        window.socket.emit("closefd", fileInfo.path);  // notify uploader to close fd
       }
     }, 4000);
   },
