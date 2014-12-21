@@ -17,19 +17,29 @@ var PeerWrapper = {
   dataPeer2Peer: {content: null, checksum: 0, index: 0},
   downloadState: {},
   initPeer: function(my_uid) {  // must be called first in main.js
+    window.retryInvokers = {};
     this.peer = new Peer(my_uid, peerConfig);
     var that = this;
     this.uploadConnections = {};  // 保存用于上传的conn信息
     this.downloadConnections = {}; // 保存用于下载的conn信息
     this.parts_left = {}; // 记录每个文件的下载情况, key是hash, value是剩余part的Array
     this.peer.on('error', function(err){
-      console.log(err);
-      if (err.type === "unavailable-id") {
-        //that.peer = new Peer(my_uid + Date.now(), peerConfig);
-        /*
-        这里假设peerjs-server一定能正常下线用户, 如果不能, 似乎只能重启来解决了
-         */
-        console.log("unavailable id");
+      switch (err.type) {
+        case "peer-unavailable":  // fire for uploader
+          var downloader = err.message.split(' ').pop();
+          if (window.retryInvokers[downloader]){
+            window.retryInvokers[downloader]();
+          }
+          break;
+        case "unavailable-id":
+          //that.peer = new Peer(my_uid + Date.now(), peerConfig);
+          /*
+           这里假设peerjs-server一定能正常下线用户, 如果不能, 似乎只能重启来解决了
+           */
+          console.log("unavailable id");
+          break;
+        default:
+          console.log(err);
       }
     });
     this.peer.on('disconnected', function(){
@@ -163,7 +173,6 @@ var PeerWrapper = {
   },
   upload: function(my_uid, downloader_uid, fileInfo, try_count){
     var that = this;
-    var connected = false;
     var conn;
     if (!this.peer.disconnected) {  // check peer's connection to PeerServer
       var peerConnConfig = {
@@ -173,7 +182,9 @@ var PeerWrapper = {
       };
       conn = that.peer.connect(downloader_uid, peerConnConfig);
       conn.on('open', function(){
-        connected = true;   // set flag = true so don't connect again
+        if (window.retryInvokers[downloader_uid]) {
+          delete window.retryInvokers[downloader_uid];
+        }
         console.log("connected to downloader: " + conn.peer);
         if (!that.uploadConnections[fileInfo.hash]) {
           that.uploadConnections[fileInfo.hash] = {};
@@ -219,14 +230,16 @@ var PeerWrapper = {
     } else {
       throw PeerDisconnectedServerError("peer no longer connected to peerServer");
     }
-    setTimeout(function(){  // try 3 times if connection failed
-      if (try_count < MAX_TRY && !connected) {
+    window.retryInvokers[downloader_uid] = function() {
+      // reconnect downloader if "peer-unavailable" error happens
+      if (try_count < MAX_TRY) {
         console.log("uploader try again");
-        that.upload(my_uid, downloader_uid, fileInfo, try_count+1);
+        that.upload(my_uid, downloader_uid, fileInfo, try_count + 1);
       } else {
         window.socket.emit("closefd", fileInfo.path);  // notify uploader to close fd
+        delete window.retryInvokers[downloader_uid];
       }
-    }, 4000);
+    }
   },
   sendBlock: function(dataNode2DOM){
     this.dataPeer2Peer.content = dataNode2DOM.content;
