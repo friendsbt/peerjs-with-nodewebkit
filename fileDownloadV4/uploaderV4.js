@@ -41,6 +41,7 @@ global.socket.on("closefd", function(path){
         browserWindow.console.log(err);
       } else {
         browserWindow.console.log("uploader close fd");
+        delete fds[path];
       }
     });
   }

@@ -221,6 +221,7 @@ var PeerWrapper = {
     }
     setTimeout(function(){  // try 3 times if connection failed
       if (try_count < MAX_TRY && !connected) {
+        console.log("uploader try again");
         that.upload(my_uid, downloader_uid, fileInfo, try_count+1);
       } else {
         window.socket.emit("closefd", fileInfo.path);  // notify uploader to close fd
