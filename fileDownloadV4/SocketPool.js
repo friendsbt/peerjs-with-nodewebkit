@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 /* vim: set expandtab sw=2 ts=2 : */
 
 var SocketPool = module.exports = function(){
