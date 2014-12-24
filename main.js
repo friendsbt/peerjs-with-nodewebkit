@@ -10,6 +10,8 @@ function main(window){
 	var express = require("express");
 	var app = express();
 	var http = require('http');
+  var randomAccessFile = require("random-access-file");
+
 	var server = http.createServer(app);
 	var io = require('socket.io').listen(server);
   server.listen(12345);
@@ -73,7 +75,7 @@ function main(window){
         var pieceindex = message.pieceindex;
         var piecesize = message.piecesize;
 
-        var file = randomAccessFile(hash);
+        var file = randomAccessFile(filepath);
         var isLastPiece = (filesize-pieceindex*piecesize < piecesize);
         var readsize = isLastPiece ? filesize-pieceindex*piecesize : piecesize;
 
@@ -100,7 +102,7 @@ function main(window){
             filesize: filesize,
             pieceindex: pieceindex,
             piecesize: readsize,
-            piecehash: crypto.createHash('md5').update(data).digest('hex'),
+            piecehash: 11111,
             data: data
           });
           file.close();
