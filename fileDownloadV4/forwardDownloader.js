@@ -34,7 +34,7 @@ var forwardDownloader = module.exports = function(
   this.pieceindex = 0;
   this.pieces_left = []; // Set by initPieces
   this.parts_left = []; // Set by startFileDownload
-  this.done_parts = [];
+  this.complete_parts = [];
 
   this.file_to_save = fileInfo.file_to_save;
   this.file_to_save_tmp = this.file_to_save + '.tmp';
@@ -144,7 +144,7 @@ forwardDownloader.prototype.updatePartsLeft = function(pieceindex) {
     this.pieceindex = 0;
     this.pieces_left = [];
     this.parts_left = [];
-    this.done_parts = [];
+    this.complete_parts = [];
   }
   else {
     var index = this.pieces_left.indexOf(pieceindex);
@@ -154,7 +154,7 @@ forwardDownloader.prototype.updatePartsLeft = function(pieceindex) {
         var index = Math.floor(this.pieceindex / piecenum);
         var blockindex =  this.parts_left[index];
 
-        this.done_parts.push(blockindex);
+        this.complete_parts.push(blockindex);
         res_api.remove_part_from_parts_left(this.hash, this.blockindex);
       }
     }
@@ -190,19 +190,12 @@ forwardDownloader.prototype.startFileDownload = function(parts_left) {
   this.initPieces(parts_left);
 
   var that = this;
-  if(parts_left.length) {
-    // Which uploader should I use?
-    that.downloader.send(this.uploaderUidList[this.uploaderindex], {
-      hash: that.hash,
-      filesize: that.filesize,
-      pieceindex: that.pieces_left[that.pieceindex],
-      piecesize: that.piecesize //Download block piece by piece
-    });
-  }
-  else {
-    this.state = this.DownloadState.DOWNLOAD_OVER;
-    this.downloadOverCallback(this);
-  }
+  that.downloader.send(this.uploaderUidList[this.uploaderindex], {
+    hash: that.hash,
+    filesize: that.filesize,
+    pieceindex: that.pieces_left[that.pieceindex],
+    piecesize: that.piecesize //Download block piece by piece
+  });
 };
 
 
@@ -234,7 +227,7 @@ forwardDownloader.prototype.cancelFileDownload = function() {
   this.pieceindex = 0;
   this.pieces_left = [];
   this.parts_left = [];
-  this.done_parts = [];
+  this.complete_parts = [];
 };
 
 
