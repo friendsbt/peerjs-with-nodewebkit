@@ -53,12 +53,14 @@ function main(window){
       fileDowloadV4.downloadFile(fileInfo, my_uid, uploader_uids);
 
       // test pause and resume
+      /*
       setTimeout(function(){
         fileDowloadV4.pauseFileDownload(hash);
         setTimeout(function(){
           fileDowloadV4.resumeFileDownload(hash);
         }, 5000);
       }, 10000);
+      */
     }
     if (my_uid === 'zuoyao') {
       //var downloader_uid = 'lizhihua';

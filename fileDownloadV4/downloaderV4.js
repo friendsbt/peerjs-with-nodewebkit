@@ -23,10 +23,12 @@ exports.initWindow = function(window) {
 
 function v4Downloader(fileInfo, my_uid, uploader_uids, e,
         downloadOverCallback, downloadProgressCallback) {
+  this.my_uid = my_uid;
   this.innerDownloader = new peerjsDownloader(fileInfo);
   this.hash = fileInfo.hash;
   this.size = fileInfo.size;
   this.file_to_save = fileInfo.file_to_save;
+  this.fileInfo = fileInfo;
   this.file_to_save_tmp = fileInfo.file_to_save + '.tmp';
   this.uploaderUidList = uploader_uids.split(',');
   this.descriptor = raf(this.file_to_save_tmp);
