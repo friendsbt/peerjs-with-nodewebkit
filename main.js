@@ -59,9 +59,53 @@ function main(window){
       }, 10000);
     }
     if (my_uid === 'zuoyao') {
-      var downloader_uid = 'lizhihua';
-      // 实际中接收传来的size和hash
-      fileUploadV4.initV4Upload(my_uid, downloader_uid, hash, size);
+      //var downloader_uid = 'lizhihua';
+      //fileUploadV4.initV4Upload(my_uid, downloader_uid, hash, size);
+
+      var ChartRoomTalker = require('./fileDownloadV4/ChartRoom-talker.js');
+      var uploader = new ChartRoomTalker('http://182.92.212.237:8099', '123');
+      uploader.onError = function(error) {
+        console.log(error);
+      };
+      uploader.onMessage = function(sUid, message) {
+        var filehash = message.filehash;
+        var filesize = message.filesize;
+        var pieceindex = message.pieceindex;
+        var piecesize = message.piecesize;
+
+        var file = randomAccessFile(hash);
+        var isLastPiece = (filesize-pieceindex*piecesize < piecesize);
+        var readsize = isLastPiece ? filesize-pieceindex*piecesize : piecesize;
+
+        if(readsize <= 0) {
+          uploader.send(sUid, {
+            filehash: filehash,
+            filesize: filesize,
+            pieceindex: pieceindex,
+            piecesize: readsize,
+            piecehash: null,
+            data: null //EOF
+          });
+          return;
+        }
+
+        file.read(pieceindex*piecesize, readsize, function(error, data) {
+          if(error) {
+            console.log(error);
+            return process.exit(1);
+          }
+
+          uploader.send(sUid, {
+            filehash: filehash,
+            filesize: filesize,
+            pieceindex: pieceindex,
+            piecesize: readsize,
+            piecehash: crypto.createHash('md5').update(data).digest('hex'),
+            data: data
+          });
+          file.close();
+        });
+      }
     }
   });
 
