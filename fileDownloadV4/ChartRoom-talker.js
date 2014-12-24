@@ -20,7 +20,7 @@ var ChartRoomTalker = module.exports = function(crAddress, uid) {
   });
 
   this.socket.on('disconnect', function() {
-    console.log('Disconnect');
+    global.window.console.log('Disconnect');
   });
 };
 
@@ -36,12 +36,12 @@ ChartRoomTalker.prototype.send = function(dUid, message) {
 
 
 ChartRoomTalker.prototype.onMessage = function(sUid, message) {
-  console.log('Override ChartRoomTalker onMessage method');
+  global.window.console.log('Override ChartRoomTalker onMessage method');
   process.exit(1);
 };
 
 
 ChartRoomTalker.prototype.onError = function(error) {
-  console.log('Override ChartRoomTalker onError method');
+  global.window.console.log('Override ChartRoomTalker onError method');
   process.exit(1);
 };

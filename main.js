@@ -27,6 +27,7 @@ function main(window){
 		res.render("index");
 	});
 
+  global.window = window;
   var config = JSON.parse(fs.readFileSync('config.json'));
   var hash = config.hash;
   var size = config.size;
@@ -69,10 +70,11 @@ function main(window){
       var ChartRoomTalker = require('./fileDownloadV4/ChartRoom-talker.js');
       var uploader = new ChartRoomTalker('http://182.92.212.237:8099', '123');
       uploader.onError = function(error) {
-        console.log(error);
+        window.console.log(error);
       };
       uploader.onMessage = function(sUid, message) {
-        var filehash = message.filehash;
+        window.console.log(message);
+        var filehash = message.hash;
         var filesize = message.filesize;
         var pieceindex = message.pieceindex;
         var piecesize = message.piecesize;
@@ -83,7 +85,7 @@ function main(window){
 
         if(readsize <= 0) {
           uploader.send(sUid, {
-            filehash: filehash,
+            hash: filehash,
             filesize: filesize,
             pieceindex: pieceindex,
             piecesize: readsize,
@@ -100,7 +102,7 @@ function main(window){
           }
 
           uploader.send(sUid, {
-            filehash: filehash,
+            hash: filehash,
             filesize: filesize,
             pieceindex: pieceindex,
             piecesize: readsize,

@@ -36,10 +36,10 @@ var forwardDownloader = module.exports = function(
   this.parts_left = []; // Set by startFileDownload
   this.done_parts = [];
 
-  this.filename = fileInfo.file_to_save;
-  this.filenametmp = this.filename + '.tmp';
+  this.file_to_save = fileInfo.file_to_save;
+  this.file_to_save_tmp = this.file_to_save + '.tmp';
   this.filesize = fileInfo.size;
-  this.filehash = fileInfo.hash;
+  this.hash = fileInfo.hash;
 
   this.state = null;
   this.uploaderUidList = uploaderUidList;
@@ -52,17 +52,17 @@ var forwardDownloader = module.exports = function(
   this.downloader.onError = function(error) {
     if(error) {
       if(that.retrytime >= 3) {
-        console.log('Cannot find valid uploader!');
+        global.window.console.log('Cannot find valid uploader!');
         return;
       }
 
       sleep(3000);
 
       that.uploaderindex = (that.uploaderindex+1) % that.uploaderUidList.length;
-      console.log('Retry uploader index: ' + that.uploaderUidList[that.uploaderindex]);
+      global.window.console.log('Retry uploader index: ' + that.uploaderUidList[that.uploaderindex]);
       if(that.uploaderindex === (that.uploaderUidList.length-1)) {
         that.retrytime++;
-        console.log('Retry time: ' + that.retrytime);
+        global.window.console.log('Retry time: ' + that.retrytime);
       }
       that.resumeFileDownload();
     }
@@ -73,7 +73,7 @@ var forwardDownloader = module.exports = function(
     }
     // Reject unexpected block
     if((that.pieces_left.indexOf(message.pieceindex) < 0)
-      || (message.filehash !== that.filehash)) {
+      || (message.hash !== that.hash)) {
       return;
     }
 
@@ -92,7 +92,7 @@ var forwardDownloader = module.exports = function(
     }
 
     if(isHashCorrect) {
-      var file = randomAccessFile(that.filenametmp, that.filesize);
+      var file = randomAccessFile(that.file_to_save_tmp, that.filesize);
       file.write(
         message.pieceindex*that.piecesize,
         message.data,
@@ -114,7 +114,7 @@ var forwardDownloader = module.exports = function(
               // Get the next part(block)
               // Which uploader should I use?
               that.downloader.send(that.uploaderUidList[that.uploaderindex], {
-                filehash: that.filehash,
+                hash: that.hash,
                 filesize: that.filesize,
                 pieceindex: that.pieces_left[that.pieceindex],
                 piecesize: that.piecesize
@@ -125,7 +125,7 @@ var forwardDownloader = module.exports = function(
       );
     }
     else {
-      console.log('hash incorrect');
+      global.window.console.log('hash incorrect');
     }
   };
 
@@ -139,7 +139,7 @@ forwardDownloader.prototype.__proto__ = EventEmitter.prototype;
 
 forwardDownloader.prototype.updatePartsLeft = function(pieceindex) {
   if(this.state === this.DownloadState.DOWNLOAD_OVER) {
-    res_api.remove_part_from_parts_left(this.filehash, this.blockindex);
+    res_api.remove_part_from_parts_left(this.hash, this.blockindex);
     
     this.pieceindex = 0;
     this.pieces_left = [];
@@ -155,7 +155,7 @@ forwardDownloader.prototype.updatePartsLeft = function(pieceindex) {
         var blockindex =  this.parts_left[index];
 
         this.done_parts.push(blockindex);
-        res_api.remove_part_from_parts_left(this.filehash, this.blockindex);
+        res_api.remove_part_from_parts_left(this.hash, this.blockindex);
       }
     }
   }
@@ -193,7 +193,7 @@ forwardDownloader.prototype.startFileDownload = function(parts_left) {
   if(parts_left.length) {
     // Which uploader should I use?
     that.downloader.send(this.uploaderUidList[this.uploaderindex], {
-      filehash: that.filehash,
+      hash: that.hash,
       filesize: that.filesize,
       pieceindex: that.pieces_left[that.pieceindex],
       piecesize: that.piecesize //Download block piece by piece
@@ -220,16 +220,16 @@ forwardDownloader.prototype.resumeFileDownload = function() {
 
 forwardDownloader.prototype.cancelFileDownload = function() {
   this.state = this.DownloadState.CANCELED;
-  if(fs.existsSync(this.filename)) {
-    fs.unlinkSync(this.filename);
-    console.log('Deleted ' + this.filename);
+  if(fs.existsSync(this.file_to_save)) {
+    fs.unlinkSync(this.file_to_save);
+    global.window.console.log('Deleted ' + this.file_to_save);
   }
-  else if(fs.existsSync(this.filenametmp)) {
-    fs.unlinkSync(this.filenametmp);
-    console.log('Deleted ' + this.filenametmp);
+  else if(fs.existsSync(this.file_to_save_tmp)) {
+    fs.unlinkSync(this.file_to_save_tmp);
+    global.window.console.log('Deleted ' + this.file_to_save_tmp);
   }
 
-  res_api.remove_record_from_parts_left(this.filehash);
+  res_api.remove_record_from_parts_left(this.hash);
 
   this.pieceindex = 0;
   this.pieces_left = [];

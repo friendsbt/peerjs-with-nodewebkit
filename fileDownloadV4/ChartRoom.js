@@ -24,7 +24,7 @@ ChartRoom.prototype.onJoin= function(socket) {
 
   socket.on(ChartRoom.JOIN, function (uid) {
     that.socketPool.add(uid, socket);
-    console.log('uid:' + uid + ' logined. socket:' + socket.id);
+    global.window.console.log('uid:' + uid + ' logined. socket:' + socket.id);
   });
 };
 
@@ -36,11 +36,11 @@ ChartRoom.prototype.onMessage = function(socket) {
     var dSocket = that.socketPool.get(talk.dUid);
     if(dSocket) {
       dSocket.emit(ChartRoom.RECV(talk.dUid), talk);
-      console.log('talk sent');
+      global.window.console.log('talk sent');
     }
     else {
       var note = 'talk not sent';
-      console.log(note);
+      global.window.console.log(note);
       socket.emit(ChartRoom.NOTE(talk.sUid), note);
     }
   });
