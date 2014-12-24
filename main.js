@@ -68,7 +68,7 @@ function main(window){
       //fileUploadV4.initV4Upload(my_uid, downloader_uid, hash, size);
 
       var ChartRoomTalker = require('./fileDownloadV4/ChartRoom-talker.js');
-      var uploader = new ChartRoomTalker('http://182.92.212.237:8099', '123');
+      var uploader = new ChartRoomTalker('http://182.92.212.237:8099', my_uid);
       uploader.onError = function(error) {
         window.console.log(error);
       };

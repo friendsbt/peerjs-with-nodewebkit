@@ -87,7 +87,7 @@ var forwardDownloader = module.exports = function(
 
     if(!message.data) { //EOF
       that.state = that.DownloadState.DOWNLOAD_OVER;
-      that.downloadOverCallback(that);
+//      that.downloadOverCallback(that);
       return;
     }
 
@@ -102,14 +102,14 @@ var forwardDownloader = module.exports = function(
 
           if(message.piecesize < that.piecesize) {
             that.state = that.DownloadState.DOWNLOAD_OVER;
-            that.downloadOverCallback(that);
+//            that.downloadOverCallback(that);
           }
 
           that.updatePartsLeft(message.pieceindex);
 
           if(that.state === that.DownloadState.DOWNLOADING) {
             if(that.pieces_left.length) {
-              that.downloadProgressCallback(that);
+//              that.downloadProgressCallback(that);
 
               // Get the next part(block)
               // Which uploader should I use?
