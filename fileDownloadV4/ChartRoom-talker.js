@@ -1,9 +1,23 @@
 /* vim: set expandtab sw=2 ts=2 : */
 
 var io = require('socket.io-client');
-var ChartRoom = require('./ChartRoom.js');
 
+/*
+ * ChartRoom settings
+ */
+var ChartRoom = {};
+ChartRoom.JOIN = 'JOIN'; // clients join chartroom
+ChartRoom.SEND = 'SEND'; // client sends message to server
+ChartRoom.RECV = function(uid) {
+  return 'RECV' + uid;
+}; // server turns message to specified client
+ChartRoom.NOTE = function(uid) {
+  return 'NOTE' + uid; // server sends message to specified client
+};
 
+/*
+ * ChartRoomTalker defination
+ */
 var ChartRoomTalker = module.exports = function(crAddress, uid) {
   this.crAddress = crAddress;
   this.uid = uid;

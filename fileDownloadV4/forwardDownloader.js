@@ -35,6 +35,7 @@ var forwardDownloader = module.exports = function(
   this.pieces_left = []; // Set by initPieces
   this.parts_left = []; // Set by startFileDownload
   this.complete_parts = [];
+  this.lastTime = null; // Set by startFileDownload
 
   this.file_to_save = fileInfo.file_to_save;
   this.file_to_save_tmp = this.file_to_save + '.tmp';
@@ -68,6 +69,12 @@ var forwardDownloader = module.exports = function(
     }
   };
   this.downloader.onMessage = function(sUid, message) {
+    var done = function () {
+       if(fs.existsSync(that.file_to_save_tmp)) { 
+         fs.rename(that.file_to_save_tmp, that.file_to_save); 
+       } 
+    };
+
     if(that.state !== that.DownloadState.DOWNLOADING) {
       return;
     }
@@ -87,6 +94,7 @@ var forwardDownloader = module.exports = function(
 
     if(!message.data) { //EOF
       that.state = that.DownloadState.DOWNLOAD_OVER;
+      done();
 //      that.downloadOverCallback(that);
       return;
     }
@@ -102,14 +110,27 @@ var forwardDownloader = module.exports = function(
 
           if(message.piecesize < that.piecesize) {
             that.state = that.DownloadState.DOWNLOAD_OVER;
+            done();
 //            that.downloadOverCallback(that);
           }
 
           that.updatePartsLeft(message.pieceindex);
 
+          // Calculate speed
+          var download_Bs = that.filesize - (that.pieces_left.length-that.pieceindex)*that.piecesize;
+          var progress = download_Bs / that.filesize;
+          var downloadSpeed = (function(nowTime) {
+            var speed = that.piecesize / (nowTime - that.lastTime);
+            that.lastTime = nowTime;
+            return speed;
+          }(Date.now() / 1000));
+          global.window.console.log('download_Bs: ' + download_Bs);
+          global.window.console.log('progress: ' + progress);
+          global.window.console.log('downloadSpeed: ' + downloadSpeed);
+
           if(that.state === that.DownloadState.DOWNLOADING) {
             if(that.pieces_left.length) {
-//              that.downloadProgressCallback(that);
+              //that.downloadProgressCallback(download_Bs, progress, downloadSpeed);
 
               // Get the next part(block)
               // Which uploader should I use?
@@ -187,6 +208,7 @@ forwardDownloader.prototype.initPieces = function(parts_left) {
 
 forwardDownloader.prototype.startFileDownload = function(parts_left) {
   this.state = this.DownloadState.DOWNLOADING;
+  this.lastTime = Date.now() / 1000;
   this.initPieces(parts_left);
 
   var that = this;
