@@ -172,10 +172,10 @@ forwardDownloader.prototype.updatePartsLeft = function(pieceindex) {
     if(index > -1) {
       var piecenum = this.BLOCKSIZE / this.piecesize;
       if((this.pieceindex + 1) % piecenum === 0) {
-        var index = Math.floor(this.pieceindex / piecenum);
-        var blockindex =  this.parts_left[index];
+        index = Math.floor(this.pieceindex / piecenum);
+        this.blockindex =  this.parts_left[index];
 
-        this.complete_parts.push(blockindex);
+        this.complete_parts.push(this.blockindex);
         res_api.remove_part_from_parts_left(this.hash, this.blockindex);
       }
     }
