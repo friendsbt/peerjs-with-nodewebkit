@@ -1,6 +1,5 @@
 var fs = require('fs');
 var path = require('path');
-var xxhash = require('xxhashjs');
 var crc32 = require('crc-32');
 var settings = require('./settings');
 var res_api = require('../res/res_api');
@@ -40,27 +39,7 @@ global.socket.on("part-complete", function(partInfo){
   if (downloaders[hash].complete_parts === downloaders[hash].total_parts) {
     browserWindow.console.log("receive complete, ", Date());
     setTimeout(function(){  // 最后一个block可能还没有写入, 必须延迟一点关闭文件
-      downloaders[hash].descriptor.close();
-      if (parseInt(xxhash(0).update(fs.readFileSync(downloaders[hash].file_to_save_tmp)
-        ).digest()) === global.hash) {
-        var timePassed = process.hrtime(global.startTime);  // for test
-        browserWindow.console.log("time passed: ", timePassed[0], " seconds");
-        browserWindow.console.log("hash equal");
-        browserWindow.console.log("download complete: ", path.basename(downloaders[hash].file_to_save));
-        global.socket.emit("complete", hash);
-        downloaders[hash].watcher.close();  // fs.FSWatcher.close()
-        fs.rename(
-          downloaders[hash].file_to_save_tmp,
-          downloaders[hash].file_to_save,
-          function(err) {
-            browserWindow.console.log(err);
-          }
-        );
-      } else {
-        browserWindow.console.log("hash not equal");
-      }
-      downloaders[hash].innerDownloader = null;
-      delete downloaders[hash];
+      downloaders[hash].downloadOver();
     }, 1000);
   }
   var download_Bs = downloaders[hash].complete_parts * settings.partsize;

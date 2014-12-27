@@ -7,6 +7,8 @@ var crypto = require('crypto');
 var fs = require('fs');
 var EventEmitter = require('events').EventEmitter;
 
+var downloaders = global.downloaders;
+
 function sleep(milliSeconds) {
   var startTime = new Date().getTime();
   while (new Date().getTime() < startTime + milliSeconds);
@@ -69,12 +71,6 @@ var forwardDownloader = module.exports = function(
     }
   };
   this.downloader.onMessage = function(sUid, message) {
-    var done = function () {
-       if(fs.existsSync(that.file_to_save_tmp)) { 
-         fs.rename(that.file_to_save_tmp, that.file_to_save); 
-       } 
-    };
-
     if(that.state !== that.DownloadState.DOWNLOADING) {
       return;
     }
@@ -94,8 +90,7 @@ var forwardDownloader = module.exports = function(
 
     if(!message.data) { //EOF
       that.state = that.DownloadState.DOWNLOAD_OVER;
-      done();
-//      that.downloadOverCallback(that);
+      downloaders[that.hash].downloadOver();
       return;
     }
 
@@ -110,8 +105,7 @@ var forwardDownloader = module.exports = function(
 
           if(message.piecesize < that.piecesize) {
             that.state = that.DownloadState.DOWNLOAD_OVER;
-            done();
-//            that.downloadOverCallback(that);
+            downloaders[that.hash].downloadOver();
           }
 
           that.updatePartsLeft(message.pieceindex);

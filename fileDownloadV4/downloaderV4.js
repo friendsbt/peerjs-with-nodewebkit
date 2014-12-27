@@ -1,5 +1,7 @@
 var fs = require('fs');
+var paths = require('path');
 var raf = require('random-access-file');
+var xxhash = require('xxhashjs');
 var res_api = require('../res/res_api');
 
 var downloaders = {};  // node 环境中保存所有downloader
@@ -121,6 +123,31 @@ v4Downloader.prototype.useForward = function() {
      */
     d.startFileDownload(parts_left);
   });
+};
+
+v4Downloader.prototype.downloadOver = function(){
+  this.descriptor.close();
+  if (parseInt(xxhash(0).update(fs.readFileSync(this.file_to_save_tmp)
+  ).digest()) === global.hash) {
+    var timePassed = process.hrtime(global.startTime);  // for test
+    browserWindow.console.log("time passed: ", timePassed[0], " seconds");
+    browserWindow.console.log("hash equal");
+    browserWindow.console.log("download complete: ", paths.basename(this.file_to_save));
+    global.socket.emit("complete", this.hash);
+    this.watcher.close();  // fs.FSWatcher.close()
+    fs.rename(
+      this.file_to_save_tmp,
+      this.file_to_save,
+      function(err) {
+        browserWindow.console.log(err);
+      }
+    );
+  } else {
+    browserWindow.console.log("hash not equal");
+  }
+  this.innerDownloader = null;
+  delete downloaders[this.hash];
+//      that.downloadOverCallback(that);
 };
 
 exports.downloadFile = function(fileInfo, my_uid, uploader_uids,
