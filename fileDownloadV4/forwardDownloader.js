@@ -101,6 +101,7 @@ var forwardDownloader = module.exports = function(
         message.data,
         function(error) {
           file.close();
+          res_api.record_uploader(message.hash, sUid);
           that.pieceindex++;
 
           if(message.piecesize < that.piecesize) {

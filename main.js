@@ -110,8 +110,6 @@ function main(window){
             data: data
           });
           file.close();
-
-          require('./res/res_api').record_uploader(filehash, my_uid);
         });
       }
     }
