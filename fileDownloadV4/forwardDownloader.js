@@ -160,7 +160,8 @@ forwardDownloader.prototype.__proto__ = EventEmitter.prototype;
 
 forwardDownloader.prototype.updatePartsLeft = function(pieceindex) {
   if(this.state === this.DownloadState.DOWNLOAD_OVER) {
-    res_api.remove_part_from_parts_left(this.hash, this.blockindex);
+    var blockindex = this.parts_left[this.parts_left.length-1];
+    res_api.remove_part_from_parts_left(this.hash, blockindex);
     
     this.pieceindex = 0;
     this.pieces_left = [];
