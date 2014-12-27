@@ -116,37 +116,10 @@ v4Downloader.prototype.useForward = function() {
   );
   var d = this;
   res_api.get_parts_left(d.hash, function(parts_left){
-    if (parts_left) {  // parts_left表中有对应项
-      // 检测文件是否已存在,如果已存在,并且没有剩余part,认为下载已完成
-      if (fs.existsSync(d.file_to_save) || fs.existsSync(d.file_to_save_tmp)){
-        if (parts_left.length === 0) {
-          browserWindow.console.log("already complete");
-          d.complete_parts = d.total_parts;
-          // TODO: call downloadOverCallback
-        } else { //文件已存在,且没有下载完成,进入【断点续传】模式
-          browserWindow.console.log("resume unfinished downloading");
-          browserWindow.console.log("parts_left: ", parts_left);
-          d.complete_parts = d.total_parts - parts_left.length;
-          d.startFileDownload(parts_left);
-        }
-      } else {// 如果文件实际上不存在,则认为是一个全新下载,并更新parts_left表对应项
-        browserWindow.console.log("file does not exist, redownload file");
-        parts_left.length = 0;  // better way to make parts_left = []
-        for (var i = 0; i < d.total_parts; i++) {
-          parts_left.push(i);
-        }
-        res_api.update_parts_left(hash, parts_left);
-        d.startFileDownload(parts_left);
-      }
-    } else { // 之前没有下载过这个文件
-      browserWindow.console.log("new download");
-      parts_left = [];
-      for (i = 0; i < d.total_parts; i++) {
-        parts_left.push(i); // 全新的下载, parts_left为所有的parts
-      }
-      res_api.update_parts_left(hash, parts_left);
-      d.startFileDownload(parts_left);
-    }
+    /*
+    因为之前在downloadFile里面已经判断过了, 所以数据库里parts_left肯定有东西, 并且肯定需要下载
+     */
+    d.startFileDownload(parts_left);
   });
 };
 
