@@ -62,7 +62,7 @@ v4Downloader.prototype.startFileDownload = function(parts_left) {
     }
   }, 1000);
   function watchFile() {
-    that.watcher = fs.watch(file_watch, function (event) {
+    that.watcher = fs.watch(file_watch, {persistent: false}, function (event) {
       if (event === 'rename') {
         if (!fs.existsSync(file_watch)) {
           // tmp文件消失, 且真文件又不存在, 说明在下载过程中tmp被删除或者重命名, 直接取消下载, 并向上层报错
@@ -126,15 +126,15 @@ v4Downloader.prototype.useForward = function() {
 };
 
 v4Downloader.prototype.downloadOver = function(){
+  this.watcher.close();  // fs.FSWatcher.close()
   this.descriptor.close();
+  global.socket.emit("complete", this.hash);
   if (parseInt(xxhash(0).update(fs.readFileSync(this.file_to_save_tmp)
   ).digest()) === global.hash) {
     var timePassed = process.hrtime(global.startTime);  // for test
     browserWindow.console.log("time passed: ", timePassed[0], " seconds");
     browserWindow.console.log("hash equal");
     browserWindow.console.log("download complete: ", paths.basename(this.file_to_save));
-    global.socket.emit("complete", this.hash);
-    this.watcher.close();  // fs.FSWatcher.close()
     fs.rename(
       this.file_to_save_tmp,
       this.file_to_save,
@@ -143,6 +143,7 @@ v4Downloader.prototype.downloadOver = function(){
       }
     );
   } else {
+    fs.unlink(this.file_to_save_tmp);
     browserWindow.console.log("hash not equal");
   }
   this.innerDownloader = null;
