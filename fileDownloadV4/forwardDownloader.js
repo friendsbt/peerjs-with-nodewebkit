@@ -1,6 +1,6 @@
 /* vim: set expandtab sw=2 ts=2 : */
 
-var ChartRoomTalker = require('./ChartRoom-talker.js');
+var chatRoomTalker = require('./chatRoom-talker.js');
 var randomAccessFile = require('random-access-file');
 var res_api = require('../res/res_api');
 var crypto = require('crypto');
@@ -49,7 +49,7 @@ var forwardDownloader = module.exports = function(
 
   var that = this;
 
-  this.downloader = new ChartRoomTalker('http://182.92.212.237:8099', my_uid);
+  this.downloader = new chatRoomTalker('http://182.92.212.237:8099', my_uid);
   this.downloader.onError = function(error) {
     if(error) {
       if(that.retrytime >= 3) {
