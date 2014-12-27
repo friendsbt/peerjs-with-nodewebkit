@@ -118,6 +118,7 @@ var forwardDownloader = module.exports = function(
 
           // Calculate speed
           var download_Bs = that.filesize - (that.pieces_left.length-that.pieceindex)*that.piecesize;
+          download_Bs = download_Bs < 0 ? that.pieceindex*that.piecesize : download_Bs;
           var progress = download_Bs / that.filesize;
           var downloadSpeed = (function(nowTime) {
             var speed = that.piecesize / (nowTime - that.lastTime);
