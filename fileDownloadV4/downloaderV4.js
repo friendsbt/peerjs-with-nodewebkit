@@ -57,7 +57,9 @@ v4Downloader.prototype.startFileDownload = function(parts_left) {
   var intervalObj = setInterval(function(){
     // since we can't watch a non-existent file, watch has to be called after file creation
     if (fs.existsSync(file_watch)) {
-      watchFile();
+      if (!that.watcher) {
+        watchFile();
+      }
       clearInterval(intervalObj);
     }
   }, 1000);
@@ -139,7 +141,9 @@ v4Downloader.prototype.downloadOver = function(){
       this.file_to_save_tmp,
       this.file_to_save,
       function(err) {
-        browserWindow.console.log(err);
+        if (err) {
+          browserWindow.console.log(err);
+        }
       }
     );
   } else {
