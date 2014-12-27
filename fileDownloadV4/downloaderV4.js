@@ -106,7 +106,7 @@ v4Downloader.prototype.useForward = function() {
   // can't use Peerjs so use forward mode
   // TODO: safe delete this.innerDownloader, simple delete may leak memory
   delete this.innerDownloader;
-  downloaders[this.fileInfo.hash].innerDownloader = new forwardDownloader(
+  this.innerDownloader = new forwardDownloader(
     this.fileInfo,
     this.my_uid,
     this.uploaderUidList,
@@ -114,7 +114,7 @@ v4Downloader.prototype.useForward = function() {
     this.downloadOverCallback,
     this.downloadProgressCallback
   );
-  var d = downloaders[this.fileInfo.hash];
+  var d = this;
   res_api.get_parts_left(d.hash, function(parts_left){
     if (parts_left) {  // parts_left表中有对应项
       // 检测文件是否已存在,如果已存在,并且没有剩余part,认为下载已完成

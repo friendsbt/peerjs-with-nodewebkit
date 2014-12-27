@@ -39,19 +39,19 @@ function main(window){
 	io.sockets.on('connection', function(socket) {
     global.socket = socket;
     socket.emit("initpeer", my_uid);  // create Peer for download/upload
-    var fileDowloadV4 = require('./fileDownloadV4/downloaderV4.js');
+    var fileDownloadV4 = require('./fileDownloadV4/downloaderV4.js');
     var fileUploadV4 = require('./fileDownloadV4/uploaderV4.js');
 
     // init window object for debugging, remove this when moved into FBT
     fileUploadV4.initWindow(window);
-    fileDowloadV4.initWindow(window);
+    fileDownloadV4.initWindow(window);
     require('./fileDownloadV4/peerDownloader.js').initWindow(window);
     require('./res/res_api.js').initWindow(window);
 
     if (my_uid === 'lizhihua') {
       var uploader_uids = 'zuoyao';
       var fileInfo = {hash: hash, size: size, file_to_save: filepath};
-      fileDowloadV4.downloadFile(fileInfo, my_uid, uploader_uids);
+      fileDownloadV4.downloadFile(fileInfo, my_uid, uploader_uids);
 
       // test pause and resume
       /*
