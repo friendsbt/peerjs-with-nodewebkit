@@ -167,7 +167,8 @@ exports.downloadFile = function(fileInfo, my_uid, uploader_uids,
   );
   global.startTime = process.hrtime();  // for test
   downloaders[fileInfo.hash] = d;
-  res_api.get_parts_left(d.hash, function(parts_left){
+  var hash = fileInfo.hash;
+  res_api.get_parts_left(hash, function(parts_left){
     if (parts_left) {  // parts_left表中有对应项
       // 检测文件是否已存在,如果已存在,并且没有剩余part,认为下载已完成
       if (fs.existsSync(d.file_to_save) || fs.existsSync(d.file_to_save_tmp)){
